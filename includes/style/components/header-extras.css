@@ -1,0 +1,217 @@
+/* Search Overlay Styles */
+.search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 10vh;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.search-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.search-overlay-content {
+    width: 90%;
+    max-width: 700px;
+    position: relative;
+    transform: translateY(-30px);
+    transition: transform 0.3s ease;
+}
+
+.search-overlay.active .search-overlay-content {
+    transform: translateY(0);
+}
+
+.search-close-btn {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.search-close-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.8;
+}
+
+.search-box-wrapper {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.search-form { margin-bottom: 30px; }
+
+.search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-input-icon {
+    position: absolute;
+    left: 20px;
+    width: 24px;
+    height: 24px;
+    color: #999;
+    pointer-events: none;
+}
+
+.search-input {
+    flex: 1;
+    padding: 18px 20px 18px 56px;
+    font-size: 18px;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.3s ease;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.search-input:focus { border-color: #FFB6C1; }
+
+.search-submit-btn {
+    padding: 18px 32px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    font-family: 'Montserrat', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.search-submit-btn:hover { background: #333; transform: translateY(-2px); }
+
+.search-suggestions { padding-top: 20px; border-top: 1px solid #e5e5e5; }
+
+.search-suggestions-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.search-tags { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+}
+
+.search-tag {
+    padding: 10px 20px;
+    background: #f5f5f5;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.search-tag:hover { 
+    background: #FFB6C1; 
+    color: #000; 
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .search-overlay { padding-top: 5vh; }
+    .search-box-wrapper { padding: 20px; }
+    .search-input { font-size: 16px; padding: 16px 20px 16px 50px; }
+    .search-input-icon { left: 16px; width: 20px; height: 20px; }
+    .search-submit-btn { padding: 16px 24px; font-size: 14px; }
+    .search-close-btn { top: -45px; }
+}
+
+/* Account Dropdown Styles */
+.account-dropdown-wrapper { 
+    position: relative; 
+}
+
+.account-dropdown-btn { position: relative; 
+    overflow: hidden; 
+}
+
+.account-profile-img {
+    width: 32px; 
+    height: 32px; 
+    border-radius: 50%; 
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.2); 
+    transition: all 0.3s ease;
+}
+
+.account-dropdown-btn:hover 
+
+.account-profile-img { 
+    border-color: rgba(255, 255, 255, 0.4); 
+    transform: scale(1.05); 
+}
+
+.account-dropdown-menu {
+    position: absolute; 
+    top: 100%; right: 0;
+     background: white; 
+     border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+     min-width: 280px; 
+     opacity: 0;
+    visibility: hidden; 
+    transform: translateY(-10px); 
+    transition: all 0.3s ease;
+     z-index: 1000;
+      overflow: hidden;
+}
+
+.account-dropdown-wrapper:hover .account-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(10px); }
+.account-dropdown-header { padding: 20px; background: #ffffff; text-align: center; }
+.account-dropdown-avatar {
+    width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255, 255, 255, 0.3); margin-bottom: 12px;
+}
+.account-dropdown-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+.account-dropdown-role { font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
+.account-dropdown-divider { height: 1px; background: #e9ecef; margin: 0; }
+.account-dropdown-item {
+    display: flex; align-items: center; padding: 16px 20px; color: #495057; text-decoration: none;
+    transition: all 0.3s ease; border-bottom: 1px solid #f8f9fa;
+}
+.account-dropdown-item:last-child { border-bottom: none; }
+.account-dropdown-item:hover { background: #f8f9fa; color: #7ed957; text-decoration: none; }
+.account-dropdown-item svg { margin-right: 12px; flex-shrink: 0; }
+.account-dropdown-item span { font-weight: 500; }
+
+/* Mobile Responsive for Account Dropdown */
+@media (max-width: 768px) {
+    .account-dropdown-menu { right: -20px; min-width: 260px; }
+    .account-dropdown-header { padding: 16px; }
+    .account-dropdown-avatar { width: 50px; height: 50px; }
+    .account-dropdown-item { padding: 14px 16px; }
+}
+
+/* Additional styles for user role badge from customer header */
+.account-dropdown-role { font-size: 11px; color: rgba(0, 0, 0, 0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
