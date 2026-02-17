@@ -2,6 +2,7 @@
 ob_start();
 
 require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/store_registration_email.php';  // ADD THIS LINE
 
 // Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
@@ -56,10 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } elseif (!validateEmail($email)) {
             $_SESSION['error'] = "Please enter a valid email address.";
         } else {
-            $stmt = $conn->prepare("SELECT u.user_id, u.full_name, u.email, u.password, u.role, u.is_active, u.store_id, gs.store_name 
+            $stmt = $conn->prepare("SELECT u.user_id, u.full_name, u.email, u.password, u.role, u.is_active, u.store_id, gs.store_name, gs.is_verified 
                                    FROM users u 
                                    LEFT JOIN grocery_stores gs ON u.store_id = gs.store_id 
-                                   WHERE u.email = ? AND u.role = 'grocery_admin'");
+                                   WHERE u.email = ? AND u.role = 'grocery_admin' AND gs.is_verified = 1");
             $stmt->bind_param("s", $email);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -102,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['error'] = "Invalid email or password.";
                 }
             } else {
-                $_SESSION['error'] = "Invalid email or password. Please ensure you have a grocery admin account.";
+                $_SESSION['error'] = "Invalid email or password. Please ensure you have verified your email address before logging in.";
             }
 
             $stmt->close();
@@ -144,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } elseif (!validateEmail($store_email)) {
             $_SESSION['error'] = "Please enter a valid store email address.";
         } else {
-            // Check if email already exists
+            // Check if email already exists in users table
             $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -153,22 +154,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($result->num_rows > 0) {
                 $_SESSION['error'] = "Email already registered.";
             } else {
-                // Check if store name already exists
-                $store_check = $conn->prepare("SELECT store_id FROM grocery_stores WHERE store_name = ?");
-                $store_check->bind_param("s", $store_name);
-                $store_check->execute();
-                $store_result = $store_check->get_result();
+                // Check if store email already exists in grocery_stores table
+                $store_email_check = $conn->prepare("SELECT store_id FROM grocery_stores WHERE email = ?");
+                $store_email_check->bind_param("s", $store_email);
+                $store_email_check->execute();
+                $store_email_result = $store_email_check->get_result();
                 
-                if ($store_result->num_rows > 0) {
-                    $_SESSION['error'] = "Store name already exists. Please choose a different name.";
-                    $store_check->close();
+                if ($store_email_result->num_rows > 0) {
+                    $_SESSION['error'] = "Store email already registered.";
+                    $store_email_check->close();
                 } else {
-                    $store_check->close();
+                    $store_email_check->close();
                     
-                    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+                    // Check if store name already exists
+                    $store_check = $conn->prepare("SELECT store_id FROM grocery_stores WHERE store_name = ?");
+                    $store_check->bind_param("s", $store_name);
+                    $store_check->execute();
+                    $store_result = $store_check->get_result();
                     
-                    $conn->begin_transaction();
+                    if ($store_result->num_rows > 0) {
+                        $_SESSION['error'] = "Store name already exists. Please choose a different name.";
+                        $store_check->close();
+                    } else {
+                        $store_check->close();
                     
+                        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
                     try {
                         // Insert grocery store first
                         $store_stmt = $conn->prepare("INSERT INTO grocery_stores (store_name, business_address, contact_number, email, is_verified, is_active) VALUES (?, ?, ?, ?, 0, 1)");
@@ -180,11 +190,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             
                             // Insert user as grocery admin
                             $user_stmt = $conn->prepare("INSERT INTO users (full_name, email, password, role, store_id, is_active, img_name) VALUES (?, ?, ?, 'grocery_admin', ?, 1, 'nopfp.jpg')");
-                            $user_stmt->bind_param("ssssi", $name, $email, $hashed_password, $new_store_id);
+                            $user_stmt->bind_param("sssi", $name, $email, $hashed_password, $new_store_id);
                             
                             if ($user_stmt->execute()) {
                                 $conn->commit();
-                                $_SESSION['success'] = "Registration successful! Your account is pending verification. You can now login.";
+                                
+                                // SEND REGISTRATION EMAIL
+                                $email_result = sendStoreRegistrationEmail($conn, $new_store_id, $name, $email, $store_name);
+                                
+                                if ($email_result['success']) {
+                                    $_SESSION['success'] = "Registration successful! A confirmation email has been sent to your address.";
+                                } else {
+                                    $_SESSION['success'] = "Registration successful! You can now login. (Note: Email notification could not be sent)";
+                                    error_log("Store registration email failed: " . $email_result['message']);
+                                }
                             } else {
                                 $conn->rollback();
                                 $_SESSION['error'] = "Registration failed. Please try again.";
@@ -198,12 +217,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     } catch (Exception $e) {
                         $conn->rollback();
                         $_SESSION['error'] = "Registration failed. Please try again.";
+                        error_log("Store registration error: " . $e->getMessage());
                     }
                 }
             }
             
             $stmt->close();
         }
+    }
     }
 }
 

@@ -5,6 +5,14 @@ requireLogin();
 $conn = getDBConnection();
 $user_id = getCurrentUserId();
 
+// Initialize notification system
+require_once __DIR__ . '/../includes/notifications_system.php';
+require_once __DIR__ . '/../includes/expiry_alerts.php';
+ensureNotificationsTable($conn);
+
+// Run notification checks
+runNotificationChecks($conn, $user_id);
+
 // Get user points
 $points_stmt = $conn->prepare("SELECT total_points FROM user_points WHERE user_id = ?");
 $points_stmt->bind_param("i", $user_id);
@@ -197,6 +205,26 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="action-label">My Groups</div>
                 </a>
 
+                <a href="meal_suggestions.php" class="action-card">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                            <path d="M7 2v20"/>
+                            <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Meal Ideas</div>
+                </a>
+
+                <a href="shopping_list.php" class="action-card">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 2v2m6-2v2M4 8h16M4 8v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M4 8l1-4h14l1 4"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Shopping List</div>
+                </a>
+
                 <a href="categories.php" class="action-card">
                     <div class="action-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -242,13 +270,13 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="action-label">Waste Tracking</div>
                 </a>
 
-                <a href="analytics.php" class="action-card">
+                <a href="notification_settings.php" class="action-card">
                     <div class="action-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                         </svg>
                     </div>
-                    <div class="action-label">Analytics</div>
+                    <div class="action-label">Notifications</div>
                 </a>
             </div>
         </div>

@@ -6,9 +6,9 @@
     <title>StockFlow</title>
     <link rel="stylesheet" href="<?php echo htmlspecialchars($baseUrl); ?>/css/style.css">
     <?php if (isset($pageCss)) echo $pageCss; ?>
-    <script src="<?= htmlspecialchars($baseUrl) ?>/script.js" defer></script>
-    <link rel="stylesheet" href="<?= htmlspecialchars($baseUrl) ?>/includes/style/components/header-extras.css">
-    <script src="<?= htmlspecialchars($baseUrl) ?>/includes/js/components/header-extras.js" defer></script>
+    <script src="<?php echo htmlspecialchars($baseUrl); ?>/script.js" defer></script>
+    <link rel="stylesheet" href="<?php echo htmlspecialchars($baseUrl); ?>/includes/style/components/header-extras.css">
+    <script src="<?php echo htmlspecialchars($baseUrl); ?>/includes/js/components/header-extras.js" defer></script>
 </head>
 <body>
 
@@ -43,35 +43,30 @@ if (!isset($conn) || $conn === null) {
 
 <header class="header-container">
     <div class="header-main">
-        <a href="<?= htmlspecialchars($baseUrl) ?>/index.php" class="logo">
-            <img src="<?= htmlspecialchars($baseUrl) ?>/assets/logo/logo1.png" alt="StockFlow" class="logo-img">
+        <a href="<?php echo htmlspecialchars($baseUrl); ?>/index.php" class="logo">
+            <img src="<?php echo htmlspecialchars($baseUrl); ?>/assets/logo/logo1.png" alt="StockFlow" class="logo-img">
         </a>
 
         <nav class="nav-container" id="mobile-nav">
             <ul class="main-nav">
                 <?php if ($current_role === 'grocery_admin'): ?>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/grocery/grocery_dashboard.php" class="nav-link">Dashboard</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/grocery/items/grocery_items.php" class="nav-link">Inventory</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/grocery/product_catalog/view_product_catalog.php" class="nav-link">Product Catalog</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/grocery/suppliers/view_suppliers.php" class="nav-link">Suppliers</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/grocery/grocery_dashboard.php" class="nav-link">Dashboard</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/grocery/items/grocery_items.php" class="nav-link">Inventory</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/grocery/product_catalog/view_product_catalog.php" class="nav-link">Product Catalog</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/grocery/suppliers/view_suppliers.php" class="nav-link">Suppliers</a></li>
                 <?php else: ?>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/user/dashboard.php" class="nav-link">Dashboard</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/user/customer/item/my_items.php" class="nav-link">My Items</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/user/customer/item/add_item.php" class="nav-link">Add Item</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/user/customer/groups/my_groups.php" class="nav-link">Groups</a></li>
-                    <li><a href="<?= htmlspecialchars($baseUrl) ?>/user/profile/profile.php" class="nav-link">Profile</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/dashboard.php" class="nav-link">Dashboard</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/item/my_items.php" class="nav-link">My Items</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/item/add_item.php" class="nav-link">Add Item</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/groups/my_groups.php" class="nav-link">Groups</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/profile/profile.php" class="nav-link">Profile</a></li>
                 <?php endif; ?>
-                
-                <!-- Mobile-only logout link
-                <li class="mobile-only-nav-item">
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/user/logout.php" class="nav-link" style="color: #fc8181;">
-                        <span class="nav-icon">🚪</span>Sign Out
-                    </a>
-                </li> -->
             </ul>
         </nav>
 
-        <div class="header-actions desktop-only">
+        <div class="header-right-actions">
+            <?php include __DIR__ . '/notification_bell.php'; ?>
+
             <div class="account-dropdown-wrapper">
                 <button class="icon-btn account-dropdown-btn" aria-label="Account" type="button">
                     <img src="<?php echo $profile_pic; ?>" 
@@ -91,14 +86,14 @@ if (!isset($conn) || $conn === null) {
                         </div>
                     </div>
                     <div class="account-dropdown-divider"></div>
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/<?= $current_role === 'grocery_admin' ? 'grocery' : 'user' ?>/profile/profile.php" class="account-dropdown-item">
+                    <a href="<?php echo htmlspecialchars($baseUrl); ?>/<?php echo $current_role === 'grocery_admin' ? 'grocery' : 'user'; ?>/profile/profile.php" class="account-dropdown-item">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
                         </svg>
                         <span>Profile</span>
                     </a>
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/<?= $current_role === 'grocery_admin' ? 'grocery/grocery_dashboard' : 'user/dashboard' ?>.php" class="account-dropdown-item">
+                    <a href="<?php echo htmlspecialchars($baseUrl); ?>/<?php echo $current_role === 'grocery_admin' ? 'grocery/grocery_dashboard' : 'user/dashboard'; ?>.php" class="account-dropdown-item">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="7" height="7"/>
                             <rect x="14" y="3" width="7" height="7"/>
@@ -108,7 +103,7 @@ if (!isset($conn) || $conn === null) {
                         <span>Dashboard</span>
                     </a>
                     <div class="account-dropdown-divider"></div>
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/user/logout.php" class="account-dropdown-item" style="color: #fc8181;">
+                    <a href="<?php echo htmlspecialchars($baseUrl); ?>/user/logout.php" class="account-dropdown-item" style="color: #fc8181;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                             <polyline points="16 17 21 12 16 7"/>
@@ -132,19 +127,19 @@ if (!isset($conn) || $conn === null) {
 <!-- Not logged in - show minimal header -->
 <header class="header-container">
     <div class="header-main">
-        <a href="<?= htmlspecialchars($baseUrl) ?>/index.php" class="logo">
-            <img src="<?= htmlspecialchars($baseUrl) ?>/assets/logo/logo1.png" alt="StockFlow" class="logo-img">
+        <a href="<?php echo htmlspecialchars($baseUrl); ?>/index.php" class="logo">
+            <img src="<?php echo htmlspecialchars($baseUrl); ?>/assets/logo/logo1.png" alt="StockFlow" class="logo-img">
         </a>
 
         <nav class="nav-container" id="mobile-nav">
             <ul class="main-nav">
-                <li><a href="<?= htmlspecialchars($baseUrl) ?>/index.php" class="nav-link">Home</a></li>
-                <li><a href="<?= htmlspecialchars($baseUrl) ?>/about.php" class="nav-link">About</a></li>
-                <li><a href="<?= htmlspecialchars($baseUrl) ?>/features.php" class="nav-link">Features</a></li>
+                <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/index.php" class="nav-link">Home</a></li>
+                <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/about.php" class="nav-link">About</a></li>
+                <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/features.php" class="nav-link">Features</a></li>
             </ul>
         </nav>
 
-        <div class="header-actions desktop-only">
+        <div class="header-right-actions">
             <div class="account-dropdown-wrapper">
                 <button class="icon-btn account-dropdown-btn" aria-label="Account" type="button">
                     <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1">
@@ -157,7 +152,7 @@ if (!isset($conn) || $conn === null) {
                         <div class="account-dropdown-role" style="text-align: center;">Please sign in or create an account</div>
                     </div>
                     <div class="account-dropdown-divider"></div>
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/user/login.php" class="account-dropdown-item">
+                    <a href="<?php echo htmlspecialchars($baseUrl); ?>/user/login.php" class="account-dropdown-item">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                             <polyline points="10 17 15 12 10 7"/>
@@ -165,7 +160,7 @@ if (!isset($conn) || $conn === null) {
                         </svg>
                         <span>Login</span>
                     </a>
-                    <a href="<?= htmlspecialchars($baseUrl) ?>/user/register.php" class="account-dropdown-item">
+                    <a href="<?php echo htmlspecialchars($baseUrl); ?>/user/register.php" class="account-dropdown-item">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                             <circle cx="8.5" cy="7" r="4"/>

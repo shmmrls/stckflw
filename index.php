@@ -151,7 +151,7 @@ require_once __DIR__ . '/includes/header.php';
                             </svg>
                             Register Your Store
                         </a>
-                        <a href="grocery/login.php" class="btn btn-secondary btn-block">
+                        <a href="grocery/grocery_login.php" class="btn btn-secondary btn-block">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                                 <polyline points="10 17 15 12 10 7"/>

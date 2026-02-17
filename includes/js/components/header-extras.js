@@ -1,45 +1,60 @@
-// Search Overlay Functionality (shared)
+// Header Extras JavaScript - Profile Dropdown Mobile Click Handler
+
 document.addEventListener('DOMContentLoaded', function() {
-  const searchTriggerBtns = document.querySelectorAll('.search-trigger-btn');
-  const searchOverlay = document.getElementById('searchOverlay');
-  const searchCloseBtn = document.querySelector('.search-close-btn');
-  const searchInput = document.querySelector('.search-input');
-
-  function openSearchOverlay() {
-    if (!searchOverlay) return;
-    searchOverlay.classList.add('active');
-    if (searchInput) searchInput.focus();
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeSearchOverlay() {
-    if (!searchOverlay) return;
-    searchOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  // Event listeners
-  if (searchTriggerBtns && searchTriggerBtns.length) {
-    searchTriggerBtns.forEach(btn => btn.addEventListener('click', openSearchOverlay));
-  }
-
-  if (searchCloseBtn) {
-    searchCloseBtn.addEventListener('click', closeSearchOverlay);
-  }
-
-  // Close on escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
-      closeSearchOverlay();
-    }
-  });
-
-  // Close on overlay background click
-  if (searchOverlay) {
-    searchOverlay.addEventListener('click', function(e) {
-      if (e.target === searchOverlay) {
-        closeSearchOverlay();
-      }
+    // Handle mobile profile dropdown click
+    const accountDropdowns = document.querySelectorAll('.account-dropdown-wrapper');
+    
+    accountDropdowns.forEach(dropdown => {
+        const button = dropdown.querySelector('.account-dropdown-btn');
+        const menu = dropdown.querySelector('.account-dropdown-menu');
+        
+        if (button && menu) {
+            // Toggle dropdown on button click (mobile)
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Close other dropdowns
+                accountDropdowns.forEach(other => {
+                    if (other !== dropdown) {
+                        other.classList.remove('active');
+                    }
+                });
+                
+                // Toggle current dropdown
+                dropdown.classList.toggle('active');
+            });
+        }
     });
-  }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        accountDropdowns.forEach(dropdown => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    });
+    
+    // Prevent dropdown from closing when clicking inside it
+    accountDropdowns.forEach(dropdown => {
+        const menu = dropdown.querySelector('.account-dropdown-menu');
+        if (menu) {
+            menu.addEventListener('click', function(e) {
+                // Allow links to work normally
+                if (e.target.tagName === 'A' || e.target.closest('a')) {
+                    return;
+                }
+                e.stopPropagation();
+            });
+        }
+    });
+    
+    // Close dropdown on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            accountDropdowns.forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+        }
+    });
 });

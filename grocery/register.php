@@ -1,5 +1,5 @@
 <?php
 // Redirect to the combined login/register page
-header("Location: login.php#register");
+header("Location: grocery_login.php#register");
 exit();
 ?>

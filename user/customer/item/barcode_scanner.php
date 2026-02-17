@@ -57,7 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['barcode'])) {
 $pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/barcode.css">';
 require_once __DIR__ . '/../../../includes/header.php';
 ?>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 
@@ -239,10 +241,16 @@ require_once __DIR__ . '/../../../includes/header.php';
     
     async function getDeviceId() {
         try {
-            // Request permission first
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            // Request permission with mobile-friendly constraints
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                }
+            };
             
-            // Stop the stream immediately after getting permission
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             stream.getTracks().forEach(track => track.stop());
             
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -272,7 +280,7 @@ require_once __DIR__ . '/../../../includes/header.php';
             return videoDevices[0].deviceId;
         } catch (error) {
             console.error('Error getting device ID:', error);
-            throw error; // Re-throw to be caught by startCamera
+            throw error;
         }
     }
 
@@ -413,6 +421,11 @@ require_once __DIR__ . '/../../../includes/header.php';
                 scanResultEl.className = 'scan-status success';
                 isScanning = false;
                 
+                // Vibrate on mobile devices for better feedback
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(200);
+                }
+                
                 codeReader.reset();
                 const videoElement = document.getElementById('camera-feed');
                 videoElement.pause();
@@ -421,6 +434,15 @@ require_once __DIR__ . '/../../../includes/header.php';
             }
             if (err && !(err instanceof ZXing.NotFoundException)) {
                 console.error('Scanning error:', err);
+            }
+        }, {
+            // Mobile-friendly constraints
+            constraints: {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                }
             }
         }).catch(error => {
             console.error('Failed to start scanning:', error);

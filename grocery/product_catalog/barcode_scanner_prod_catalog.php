@@ -109,6 +109,9 @@ require_once __DIR__ . '/../../includes/header.php';
 $categories_result = $conn->query("SELECT category_id, category_name FROM categories ORDER BY category_name");
 ?>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 
@@ -338,7 +341,16 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
     
     async function getDeviceId() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            // Request permission with mobile-friendly constraints
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                }
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             stream.getTracks().forEach(track => track.stop());
             
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -348,6 +360,7 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
                 throw new Error('No video input devices found');
             }
             
+            // Try to find device with matching facing mode
             for (const device of videoDevices) {
                 try {
                     const capabilities = device.getCapabilities ? device.getCapabilities() : {};
@@ -359,6 +372,7 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
                 }
             }
             
+            // Fallback: prefer back camera for 'environment', front for 'user'
             if (facingMode === 'environment' && videoDevices.length > 1) {
                 return videoDevices[videoDevices.length - 1].deviceId;
             }
@@ -505,6 +519,11 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
                 scanResultEl.className = 'scan-status success';
                 isScanning = false;
                 
+                // Vibrate on mobile devices for better feedback
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(200);
+                }
+                
                 codeReader.reset();
                 const videoElement = document.getElementById('camera-feed');
                 videoElement.pause();
@@ -513,6 +532,15 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
             }
             if (err && !(err instanceof ZXing.NotFoundException)) {
                 console.error('Scanning error:', err);
+            }
+        }, {
+            // Mobile-friendly constraints
+            constraints: {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                }
             }
         }).catch(error => {
             console.error('Failed to start scanning:', error);

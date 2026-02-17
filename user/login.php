@@ -290,7 +290,7 @@ $conn->close();
 if (!isset($baseUrl)) {
     $baseUrl = '/StockFlowExp';
 }
-$pageCss = '<link rel="stylesheet" href="<?= htmlspecialchars($baseUrl) ?>/includes/style/pages/login.css">';
+$pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/login.css">';
 ob_end_flush();
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -462,7 +462,7 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 </section>
 
-<script src="<?= htmlspecialchars($baseUrl) ?>/includes/js/pages/login.js" defer></script>
+<script src="<?php echo htmlspecialchars($baseUrl); ?>/includes/js/pages/login.js" defer></script>
 
 <script>
 // Format invitation code input - only allow numbers
