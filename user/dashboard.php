@@ -438,14 +438,45 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php while ($group = $groups_result->fetch_assoc()): ?>
                     <div class="group-card">
                         <div class="group-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
+                            <?php
+                            $group_icon = '';
+                            switch($group['group_type']) {
+                                case 'household':
+                                    $group_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                        <polyline points="9 22 9 12 15 12 15 22"/>
+                                    </svg>';
+                                    break;
+                                case 'small_business':
+                                    $group_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 3h18v18H3zM9 3v18"/>
+                                        <path d="M9 9h12"/>
+                                        <path d="M9 15h12"/>
+                                    </svg>';
+                                    break;
+                                case 'co_living':
+                                    $group_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>';
+                                    break;
+                                default:
+                                    $group_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>';
+                            }
+                            echo $group_icon;
+                            ?>
                         </div>
                         <div class="group-name"><?php echo htmlspecialchars($group['group_name']); ?></div>
                         <div class="group-type">
                             <span class="badge badge-<?php echo strtolower($group['group_type']); ?>">
-                                <?php echo ucfirst($group['group_type']); ?>
+                                <?php echo ucfirst(str_replace('_', ' ', $group['group_type'])); ?>
                             </span>
                         </div>
                     </div>

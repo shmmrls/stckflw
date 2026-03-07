@@ -20,7 +20,17 @@
 
                 </div>
 
-                <p class="footer-tagline">Track what you buy. Track what you use. Earn points.</p>
+                <p class="footer-tagline">
+                    <?php 
+                    if (isset($_SESSION['role']) && $_SESSION['role'] === 'grocery_admin') {
+                        echo 'Manage inventory. Track expiry. Reduce waste.';
+                    } elseif (isset($_SESSION['user_id'])) {
+                        echo 'Track what you buy. Track what you use. Earn points.';
+                    } else {
+                        echo 'Your smart companion for better grocery management.';
+                    }
+                    ?>
+                </p>
 
             </div>
 
@@ -130,11 +140,11 @@
 
             <div class="footer-legal">
 
-                <a href="<?php echo htmlspecialchars($baseUrl); ?>/about.php">Privacy Policy</a>
+                <a href="<?php echo htmlspecialchars($baseUrl); ?>/privacy.php">Privacy Policy</a>
 
                 <span class="separator">|</span>
 
-                <a href="<?php echo htmlspecialchars($baseUrl); ?>/features.php">Terms of Service</a>
+                <a href="<?php echo htmlspecialchars($baseUrl); ?>/terms.php">Terms of Service</a>
 
             </div>
 

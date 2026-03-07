@@ -354,12 +354,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 : "Initial addition";
 
-            if ($supplier_id) {
-
-                $notes .= " — via supplier ID $supplier_id";
-
-            }
-
             $log->bind_param("iidis", $new_item_id, $store_id, $quantity, $user_id, $notes);
 
             $log->execute();

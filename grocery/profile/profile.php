@@ -79,9 +79,11 @@ $recent_updates_stmt = $conn->prepare("
         giu.quantity_change,
         giu.update_date,
         giu.notes,
-        gi.item_name
+        gi.item_name,
+        s.supplier_name
     FROM grocery_inventory_updates giu
     INNER JOIN grocery_items gi ON giu.item_id = gi.item_id
+    LEFT JOIN suppliers s ON gi.supplier_id = s.supplier_id
     WHERE giu.store_id = ? AND giu.updated_by = ?
     ORDER BY giu.update_date DESC
     LIMIT 5
@@ -175,6 +177,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 <div class="stat-content">
                     <div class="stat-value">₱<?php echo number_format($inventory_stats['total_value'], 2); ?></div>
                     <div class="stat-label">Inventory Value</div>
+                    <small style="color: rgba(0,0,0,0.5); font-size: 11px;">At cost price</small>
                 </div>
             </div>
 
@@ -310,6 +313,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <th>Item</th>
                                 <th>Update Type</th>
                                 <th>Quantity Change</th>
+                                <th>Supplier</th>
                                 <th>Notes</th>
                                 <th>Date</th>
                             </tr>
@@ -318,8 +322,9 @@ require_once __DIR__ . '/../../includes/header.php';
                             <?php while ($update = $recent_updates->fetch_assoc()): ?>
                                 <tr>
                                     <td><strong><?php echo htmlspecialchars($update['item_name']); ?></strong></td>
-                                    <td><span class="category-badge"><?php echo ucfirst($update['update_type']); ?></span></td>
+                                    <td><span class="category-badge"><?php echo ucfirst($update['update_type'] ?: 'updated'); ?></span></td>
                                     <td><?php echo ($update['quantity_change'] > 0 ? '+' : '') . number_format($update['quantity_change'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars($update['supplier_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($update['notes'] ?? 'N/A'); ?></td>
                                     <td><?php echo date('M d, Y g:i A', strtotime($update['update_date'])); ?></td>
                                 </tr>

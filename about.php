@@ -260,6 +260,7 @@ require_once __DIR__ . '/includes/header.php';
             </div>
         </section>
 
+        <?php if (!isset($_SESSION['user_id'])): ?>
         <section class="cta-section">
             <h2 class="cta-title">Ready to Get Started?</h2>
             <p class="cta-description">Join StockFlow today and transform the way you manage groceries.</p>
@@ -272,6 +273,7 @@ require_once __DIR__ . '/includes/header.php';
                 </a>
             </div>
         </section>
+        <?php endif; ?>
         
     </div>
 </main>

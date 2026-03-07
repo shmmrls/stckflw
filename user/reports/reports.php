@@ -531,10 +531,6 @@ require_once __DIR__ . '/../../includes/header.php';
                 <div class="metric-label">Wasted / Expired</div>
             </div>
             <div class="metric-card">
-                <div class="metric-value"><?php echo number_format(floatval($efficiency['total_consumed'] ?? 0), 1); ?></div>
-                <div class="metric-label">Units Consumed (All Time)</div>
-            </div>
-            <div class="metric-card">
                 <div class="metric-value"><?php echo number_format(floatval($waste['spoiled_qty'] ?? 0), 1); ?></div>
                 <div class="metric-label">Spoiled</div>
             </div>

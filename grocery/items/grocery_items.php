@@ -162,8 +162,8 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="stat-mini"><div class="stat-mini-value" style="color:#b91c1c"><?= number_format($stats['expired']) ?></div><div class="stat-mini-label">Expired</div></div>
             <div class="stat-mini"><div class="stat-mini-value" style="color:#c2410c"><?= number_format($stats['near_expiry']) ?></div><div class="stat-mini-label">Near Expiry</div></div>
             <div class="stat-mini"><div class="stat-mini-value" style="color:#0369a1"><?= number_format($stats['low_stock']) ?></div><div class="stat-mini-label">Low Stock</div></div>
-            <div class="stat-mini"><div class="stat-mini-value">₱<?= number_format($stats['total_value'], 2) ?></div><div class="stat-mini-label">Total Value</div></div>
-            <div class="stat-mini"><div class="stat-mini-value" style="color:#059669">₱<?= number_format($potential_profit, 2) ?></div><div class="stat-mini-label">Potential Profit</div></div>
+            <div class="stat-mini"><div class="stat-mini-value">₱<?= number_format($stats['total_value'], 2) ?></div><div class="stat-mini-label">Revenue Value</div><small style="color:rgba(0,0,0,.5);font-size:9px">At selling price</small></div>
+            <div class="stat-mini"><div class="stat-mini-value" style="color:#059669">₱<?= number_format($potential_profit, 2) ?></div><div class="stat-mini-label">Potential Profit</div><small style="color:rgba(0,0,0,.5);font-size:9px">Revenue minus cost</small></div>
             <div class="stat-mini"><div class="stat-mini-value"><?= number_format($stats['total_suppliers']) ?></div><div class="stat-mini-label">Suppliers</div></div>
             <div class="stat-mini"><div class="stat-mini-value"><?= number_format($stats['tracked_batches']) ?></div><div class="stat-mini-label">Tracked Batches</div></div>
         </div>

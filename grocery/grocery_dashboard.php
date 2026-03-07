@@ -108,7 +108,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <circle cx="17" cy="17" r="3"></circle>
                             <circle cx="7" cy="7" r="3"></circle>
                         </svg>
-                        <span>₱<?php echo number_format($summary['total_inventory_value'] ?? 0, 2); ?> Total Value</span>
+                        <span>₱<?php echo number_format($summary['total_inventory_value'] ?? 0, 2); ?> Inventory Cost</span>
                     </div>
                 </div>
             </div>
@@ -137,6 +137,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="stat-content">
                     <div class="stat-value">₱<?php echo number_format($summary['revenue_potential'] ?? 0, 2); ?></div>
                     <div class="stat-label">Revenue Potential</div>
+                    <small style="color: rgba(0,0,0,0.5); font-size: 11px;">If all items sold at retail price</small>
                 </div>
             </div>
 
@@ -333,8 +334,20 @@ require_once __DIR__ . '/../includes/header.php';
                             <tr>
                                 <td><strong><?php echo htmlspecialchars($item['item_name']); ?></strong></td>
                                 <td><?php echo htmlspecialchars($item['category_name']); ?></td>
-                                <td><?php echo htmlspecialchars($item['sku'] ?? 'N/A'); ?></td>
-                                <td><?php echo number_format($item['quantity'], 2) . ' ' . htmlspecialchars($item['unit']); ?></td>
+                                <td><?php echo htmlspecialchars($item['sku'] === '0' || empty($item['sku']) ? 'none' : $item['sku']); ?></td>
+                                <td>
+                                    <?php 
+                                    $quantity = floatval($item['quantity']);
+                                    $unit = htmlspecialchars($item['unit']);
+                                    
+                                    // If quantity is a whole number, don't show decimal places
+                                    if ($quantity == floor($quantity)) {
+                                        echo number_format($quantity, 0) . ' ' . $unit;
+                                    } else {
+                                        echo number_format($quantity, 2) . ' ' . $unit;
+                                    }
+                                    ?>
+                                </td>
                                 <td>₱<?php echo number_format($item['cost_price'], 2); ?></td>
                                 <td>₱<?php echo number_format($item['selling_price'], 2); ?></td>
                                 <td><?php echo date('M d, Y', strtotime($item['expiry_date'])); ?></td>

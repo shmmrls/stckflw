@@ -51,22 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $log_stmt->bind_param("idis", $item_id, $spoil_quantity, $user_id, $notes);
         $log_stmt->execute();
 
-        // Give 1 point for spoiled item (less than consume)
-        $points_stmt = $conn->prepare("
-            INSERT INTO user_points (user_id, total_points)
-            VALUES (?, 1)
-            ON DUPLICATE KEY UPDATE total_points = total_points + 1
-        ");
-        $points_stmt->bind_param("i", $user_id);
-        $points_stmt->execute();
-
-        $points_log_stmt = $conn->prepare("
-            INSERT INTO points_log (user_id, action_type, points_earned, item_id)
-            VALUES (?, 'SPOIL_ITEM', 1, ?)
-        ");
-        $points_log_stmt->bind_param("ii", $user_id, $item_id);
-        $points_log_stmt->execute();
-
         if ($new_quantity <= 0) {
             $delete_stmt = $conn->prepare("DELETE FROM customer_items WHERE item_id = ?");
             $delete_stmt->bind_param("i", $item_id);
@@ -75,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $newly_unlocked = checkAndAwardBadges($conn, $user_id);
 
-        $success = "Item marked as spoiled! You earned 1 point for tracking waste.";
+        $success = "Item marked as spoiled successfully!";
         if (!empty($newly_unlocked)) {
             $success .= " 🎉 Badge unlocked: " . implode(", ", $newly_unlocked);
         }
@@ -96,7 +80,7 @@ require_once __DIR__ . '/../../../includes/header.php';
         <!-- Page Header -->
         <div class="consume-header">
             <h2>Mark Item as Spoiled</h2>
-            <p>Track waste and earn points for monitoring your inventory</p>
+            <p>Track waste and monitor your inventory</p>
         </div>
 
         <?php if ($error): ?>
@@ -217,7 +201,7 @@ require_once __DIR__ . '/../../../includes/header.php';
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                             </svg>
-                            Mark as Spoiled (+1 Point)
+                            Mark as Spoiled
                         </button>
                         <a href="../../dashboard.php" class="btn btn-secondary">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

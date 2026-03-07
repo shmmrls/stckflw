@@ -30,12 +30,12 @@ $summary_stmt = $conn->prepare("
         SUM(gi.cost_price * gi.quantity) as total_inventory_cost,
         SUM((gi.selling_price - gi.cost_price) * gi.quantity) as potential_profit,
         AVG((gi.selling_price - gi.cost_price) / gi.cost_price * 100) as avg_profit_margin,
-        COUNT(DISTINCT gi.supplier_id) as total_suppliers,
+        (SELECT COUNT(*) FROM store_suppliers WHERE store_id = ?) as registered_suppliers,
         COUNT(DISTINCT CASE WHEN gi.batch_number IS NOT NULL THEN gi.batch_number END) as tracked_batches
     FROM grocery_items gi
     WHERE gi.store_id = ?
 ");
-$summary_stmt->bind_param("i", $store_id);
+$summary_stmt->bind_param("ii", $store_id, $store_id);
 $summary_stmt->execute();
 $summary = $summary_stmt->get_result()->fetch_assoc();
 
@@ -239,8 +239,8 @@ require_once __DIR__ . '/../../includes/header.php';
                     </svg>
                 </div>
                 <div class="summary-content">
-                    <h3><?php echo number_format($summary['total_suppliers'] ?? 0); ?></h3>
-                    <p>Active Suppliers</p>
+                    <h3><?php echo number_format($summary['registered_suppliers'] ?? 0); ?></h3>
+                    <p>Registered Suppliers</p>
                 </div>
             </div>
         </div>
