@@ -1,19 +1,84 @@
 <?php
 require_once __DIR__ . '/../../includes/config.php';
-requireLogin();
-
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 $conn = getDBConnection();
-$user_id = getCurrentUserId();
 
-// Get user's role
-$user_stmt = $conn->prepare("SELECT role FROM users WHERE user_id = ?");
-$user_stmt->bind_param("i", $user_id);
-$user_stmt->execute();
-$user_result = $user_stmt->get_result();
-$user_data = $user_result->fetch_assoc();
+// Handle AJAX request to get product data for editing
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['get_product'])) {
+    $catalog_id = intval($_GET['get_product']);
+    
+    $stmt = $conn->prepare("
+        SELECT pc.*, c.category_name
+        FROM product_catalog pc
+        LEFT JOIN categories c ON pc.category_id = c.category_id
+        WHERE pc.catalog_id = ?
+    ");
+    $stmt->bind_param("i", $catalog_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $product = $result->fetch_assoc();
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'product' => $product]);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Product not found']);
+    }
+    exit();
+}
 
-if ($user_data['role'] !== 'grocery_admin') {
-    die("Access denied. Only grocery admins can access this page.");
+// Handle AJAX edit request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product'])) {
+    $catalog_id = intval($_POST['catalog_id']);
+    $product_name = trim($_POST['product_name'] ?? '');
+    $brand = trim($_POST['brand'] ?? '');
+    $category_id = (isset($_POST['category_id']) && $_POST['category_id'] !== '') ? intval($_POST['category_id']) : null;
+    $default_unit = trim($_POST['default_unit'] ?? 'pcs');
+    $shelf_life = (isset($_POST['shelf_life']) && $_POST['shelf_life'] !== '') ? intval($_POST['shelf_life']) : null;
+    $description = trim($_POST['description'] ?? '');
+    $is_verified = isset($_POST['is_verified']) ? 1 : 0;
+
+    if (empty($product_name)) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Product name is required.']);
+        exit();
+    }
+
+    $update_stmt = $conn->prepare("
+        UPDATE product_catalog 
+        SET product_name = ?, brand = ?, category_id = ?, default_unit = ?, 
+            typical_shelf_life_days = ?, description = ?, is_verified = ?, updated_at = NOW()
+        WHERE catalog_id = ?
+    ");
+
+    $update_stmt->bind_param("sssisssi", $product_name, $brand, $category_id, $default_unit, $shelf_life, $description, $is_verified, $catalog_id);
+
+    if ($update_stmt->execute()) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'message' => 'Product updated successfully!']);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Error updating product: ' . $conn->error]);
+    }
+    exit();
+}
+
+// Handle AJAX delete request
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_delete_product'])) {
+    $catalog_id = intval($_POST['catalog_id']);
+    
+    $delete_stmt = $conn->prepare("DELETE FROM product_catalog WHERE catalog_id = ?");
+    $delete_stmt->bind_param("i", $catalog_id);
+    
+    if ($delete_stmt->execute()) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'message' => 'Product deleted successfully!']);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Error deleting product: ' . $conn->error]);
+    }
+    exit();
 }
 
 // Handle delete request
@@ -108,7 +173,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="header-content">
                 <div class="header-info">
                     <h1 class="page-title">Product Catalog</h1>
-                    <p class="page-subtitle">Manage your master product database</p>
+                    <p class="page-subtitle">You are privileged! You may control the master product database. Any store may access this for their inventory management.</p>
                 </div>
                 <div class="header-actions">
                     <a href="barcode_scanner_prod_catalog.php" class="btn-scan">
@@ -214,13 +279,13 @@ require_once __DIR__ . '/../../includes/header.php';
                     <tbody>
                         <?php while ($product = $products->fetch_assoc()): ?>
                             <tr>
-                                <td>
+                                <td data-label="Product Name">
                                     <div class="product-name-cell">
                                         <strong><?php echo htmlspecialchars($product['product_name']); ?></strong>
                                     </div>
                                 </td>
-                                <td><?php echo htmlspecialchars($product['brand'] ?? 'N/A'); ?></td>
-                                <td>
+                                <td data-label="Brand"><?php echo htmlspecialchars($product['brand'] ?? 'N/A'); ?></td>
+                                <td data-label="Category">
                                     <?php if ($product['category_name']): ?>
                                         <span class="category-badge">
                                             <?php echo htmlspecialchars($product['category_name']); ?>
@@ -229,20 +294,20 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <span class="text-muted">Uncategorized</span>
                                     <?php endif; ?>
                                 </td>
-                                <td>
+                                <td data-label="Barcode">
                                     <code class="barcode-display">
                                         <?php echo htmlspecialchars($product['barcode']); ?>
                                     </code>
                                 </td>
-                                <td><?php echo htmlspecialchars($product['default_unit']); ?></td>
-                                <td>
+                                <td data-label="Unit"><?php echo htmlspecialchars($product['default_unit']); ?></td>
+                                <td data-label="Shelf Life">
                                     <?php if ($product['typical_shelf_life_days']): ?>
                                         <?php echo $product['typical_shelf_life_days']; ?> days
                                     <?php else: ?>
                                         <span class="text-muted">N/A</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-center">
+                                <td data-label="Verified" class="text-center">
                                     <?php if ($product['is_verified']): ?>
                                         <span class="status-badge verified">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -254,19 +319,20 @@ require_once __DIR__ . '/../../includes/header.php';
                                         <span class="status-badge unverified">Unverified</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-center">
+                                <td data-label="Actions" class="text-center">
                                     <div class="action-buttons">
-                                        <a href="edit_product.php?id=<?php echo $product['catalog_id']; ?>" 
-                                           class="btn-icon" 
-                                           title="Edit">
+                                        <button type="button" 
+                                                class="btn-icon" 
+                                                onclick="openEditModal(<?php echo $product['catalog_id']; ?>)"
+                                                title="Edit">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                             </svg>
-                                        </a>
+                                        </button>
                                         <button type="button" 
                                                 class="btn-icon btn-delete" 
-                                                onclick="confirmDelete(<?php echo $product['catalog_id']; ?>, '<?php echo htmlspecialchars(addslashes($product['product_name'])); ?>')"
+                                                onclick="openDeleteModal(<?php echo $product['catalog_id']; ?>, '<?php echo htmlspecialchars(addslashes($product['product_name'])); ?>', '<?php echo htmlspecialchars(addslashes($product['brand'] ?? 'N/A')); ?>', '<?php echo htmlspecialchars(addslashes($product['barcode'])); ?>')"
                                                 title="Delete">
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -361,6 +427,154 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </main>
 
+<!-- Edit Product Modal -->
+<div id="edit-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeEditModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Product</h3>
+            <button type="button" class="modal-close" onclick="closeEditModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <form id="edit-form" class="modal-form">
+            <input type="hidden" id="edit-catalog-id" name="catalog_id">
+            
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label class="form-label">Product Name *</label>
+                    <input type="text" id="edit-product-name" name="product_name" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Brand</label>
+                    <input type="text" id="edit-brand" name="brand" class="form-input">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Category</label>
+                    <select id="edit-category" name="category_id" class="form-select">
+                        <option value="">Select Category</option>
+                        <?php 
+                        // Reset categories result pointer
+                        $categories->data_seek(0);
+                        while ($cat = $categories->fetch_assoc()): ?>
+                            <option value="<?php echo $cat['category_id']; ?>">
+                                <?php echo htmlspecialchars($cat['category_name']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Default Unit *</label>
+                    <select id="edit-unit" name="default_unit" class="form-select" required>
+                        <option value="pcs">Pieces</option>
+                        <option value="kg">Kilograms</option>
+                        <option value="g">Grams</option>
+                        <option value="L">Liters</option>
+                        <option value="mL">Milliliters</option>
+                        <option value="box">Box</option>
+                        <option value="pack">Pack</option>
+                        <option value="can">Can</option>
+                        <option value="bottle">Bottle</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Typical Shelf Life (days)</label>
+                    <input type="number" id="edit-shelf-life" name="shelf_life" class="form-input" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-checkbox-label">
+                        <input type="checkbox" id="edit-verified" name="is_verified" class="form-checkbox">
+                        <span class="checkbox-text">Verified Product</span>
+                    </label>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label class="form-label">Description</label>
+                    <textarea id="edit-description" name="description" class="form-textarea" rows="3"></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="modal">
+    <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="modal-content modal-small">
+        <div class="modal-header">
+            <h3 class="modal-title">Delete Product</h3>
+            <button type="button" class="modal-close" onclick="closeDeleteModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="delete-warning">
+                <div class="warning-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </div>
+                <p class="warning-message">Are you sure you want to delete this product?</p>
+            </div>
+            
+            <div class="product-details">
+                <div class="detail-row">
+                    <span class="detail-label">Product Name:</span>
+                    <span class="detail-value" id="delete-product-name"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Brand:</span>
+                    <span class="detail-value" id="delete-product-brand"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Barcode:</span>
+                    <span class="detail-value barcode-value" id="delete-product-barcode"></span>
+                </div>
+            </div>
+            
+            <div class="delete-confirmation">
+                <p class="confirmation-text">This action cannot be undone. The product will be permanently removed from the catalog.</p>
+            </div>
+        </div>
+        
+        <div class="modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button type="button" class="btn-danger" onclick="confirmDelete()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+                Delete Product
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Form -->
 <form id="delete-form" method="POST" style="display: none;">
     <input type="hidden" name="delete_product" value="1">
@@ -368,12 +582,249 @@ require_once __DIR__ . '/../../includes/header.php';
 </form>
 
 <script>
-function confirmDelete(catalogId, productName) {
-    if (confirm(`Are you sure you want to delete "${productName}" from the catalog?\n\nThis action cannot be undone.`)) {
-        document.getElementById('delete-catalog-id').value = catalogId;
-        document.getElementById('delete-form').submit();
+// Global variables
+let currentDeleteId = null;
+
+// Edit Modal Functions
+function openEditModal(catalogId) {
+    // Fetch product data via AJAX
+    fetch(`view_product_catalog.php?get_product=${catalogId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate form fields
+                document.getElementById('edit-catalog-id').value = data.product.catalog_id;
+                document.getElementById('edit-product-name').value = data.product.product_name;
+                document.getElementById('edit-brand').value = data.product.brand || '';
+                document.getElementById('edit-category').value = data.product.category_id || '';
+                document.getElementById('edit-unit').value = data.product.default_unit;
+                document.getElementById('edit-shelf-life').value = data.product.typical_shelf_life_days || '';
+                document.getElementById('edit-description').value = data.product.description || '';
+                document.getElementById('edit-verified').checked = data.product.is_verified == 1;
+                
+                // Show modal
+                document.getElementById('edit-modal').classList.add('show');
+                document.body.style.overflow = 'hidden';
+            } else {
+                showAlert('error', data.message || 'Error loading product data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'Error loading product data');
+        });
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.remove('show');
+    document.body.style.overflow = '';
+    // Reset form
+    document.getElementById('edit-form').reset();
+}
+
+// Delete Modal Functions
+function openDeleteModal(catalogId, productName, brand, barcode) {
+    currentDeleteId = catalogId;
+    
+    // Populate delete modal with product details
+    document.getElementById('delete-product-name').textContent = productName;
+    document.getElementById('delete-product-brand').textContent = brand;
+    document.getElementById('delete-product-barcode').textContent = barcode;
+    
+    // Show modal
+    document.getElementById('delete-modal').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.remove('show');
+    document.body.style.overflow = '';
+    currentDeleteId = null;
+}
+
+function confirmDelete() {
+    if (!currentDeleteId) return;
+    
+    // Show loading state
+    const deleteBtn = document.querySelector('#delete-modal .btn-danger');
+    const originalText = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Deleting...';
+    deleteBtn.disabled = true;
+    
+    // Send AJAX request
+    const formData = new FormData();
+    formData.append('ajax_delete_product', '1');
+    formData.append('catalog_id', currentDeleteId);
+    
+    fetch('view_product_catalog.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove the table row
+            const row = document.querySelector(`tr:has(button[onclick*="${currentDeleteId}"])`);
+            if (row) {
+                row.style.transition = 'opacity 0.3s ease';
+                row.style.opacity = '0';
+                setTimeout(() => row.remove(), 300);
+            }
+            
+            // Close modal and show success message
+            closeDeleteModal();
+            showAlert('success', data.message);
+            
+            // Update results count if needed
+            updateResultsCount();
+        } else {
+            showAlert('error', data.message || 'Error deleting product');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Error deleting product');
+    })
+    .finally(() => {
+        // Reset button state
+        deleteBtn.innerHTML = originalText;
+        deleteBtn.disabled = false;
+    });
+}
+
+// Edit Form Submission
+document.getElementById('edit-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Saving...';
+    submitBtn.disabled = true;
+    
+    // Send AJAX request
+    const formData = new FormData(this);
+    formData.append('edit_product', '1');
+    
+    fetch('view_product_catalog.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the table row with new data
+            updateTableRow(document.getElementById('edit-catalog-id').value, formData);
+            
+            // Close modal and show success message
+            closeEditModal();
+            showAlert('success', data.message);
+        } else {
+            showAlert('error', data.message || 'Error updating product');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Error updating product');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Helper Functions
+function updateTableRow(catalogId, formData) {
+    const row = document.querySelector(`tr:has(button[onclick*="${catalogId}"])`);
+    if (!row) return;
+    
+    // Update cells with new data
+    const cells = row.cells;
+    cells[0].querySelector('strong').textContent = formData.get('product_name');
+    cells[1].textContent = formData.get('brand') || 'N/A';
+    
+    // Update category
+    const categorySelect = document.getElementById('edit-category');
+    const categoryText = categorySelect.options[categorySelect.selectedIndex]?.text || 'Uncategorized';
+    if (categoryText === 'Uncategorized') {
+        cells[2].innerHTML = '<span class="text-muted">Uncategorized</span>';
+    } else {
+        cells[2].innerHTML = `<span class="category-badge">${categoryText}</span>`;
+    }
+    
+    // Update unit
+    cells[4].textContent = formData.get('default_unit');
+    
+    // Update shelf life
+    const shelfLife = formData.get('shelf_life');
+    cells[5].innerHTML = shelfLife ? `${shelfLife} days` : '<span class="text-muted">N/A</span>';
+    
+    // Update verified status
+    const isVerified = formData.get('is_verified') === 'on';
+    if (isVerified) {
+        cells[6].innerHTML = `
+            <span class="status-badge verified">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Verified
+            </span>
+        `;
+    } else {
+        cells[6].innerHTML = '<span class="status-badge unverified">Unverified</span>';
     }
 }
+
+function updateResultsCount() {
+    const countElement = document.querySelector('.results-count');
+    if (countElement) {
+        const currentCount = parseInt(countElement.textContent.match(/\d+/)[0]);
+        const newCount = currentCount - 1;
+        countElement.textContent = `${newCount} product${newCount !== 1 ? 's' : ''} found`;
+    }
+}
+
+function showAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Create new alert
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    
+    const icon = type === 'success' 
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    
+    alert.innerHTML = `${icon} ${message}`;
+    
+    // Insert after page header
+    const pageHeader = document.querySelector('.page-header');
+    pageHeader.parentNode.insertBefore(alert, pageHeader.nextSibling);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alert.style.transition = 'opacity 0.3s ease';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.remove(), 300);
+    }, 5000);
+}
+
+// Close modals on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (document.getElementById('edit-modal').classList.contains('show')) {
+            closeEditModal();
+        }
+        if (document.getElementById('delete-modal').classList.contains('show')) {
+            closeDeleteModal();
+        }
+    }
+});
+
+// Close modals on backdrop click (already handled by onclick on backdrop elements)
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

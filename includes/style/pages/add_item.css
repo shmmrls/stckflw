@@ -47,6 +47,44 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
 .form-textarea { resize: vertical; min-height: 100px; }
 .form-hint { font-size: 11px; color: rgba(0,0,0,0.5); letter-spacing: 0.3px; margin-top: 4px; }
 
+/* Preferred Badge */
+.preferred-badge { 
+    background: linear-gradient(135deg, #fbbf24, #f59e0b); 
+    color: #ffffff; 
+    padding: 2px 8px; 
+    border-radius: 12px; 
+    font-size: 10px; 
+    font-weight: 600; 
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* No Suppliers Notice */
+.no-suppliers-notice { 
+    background: #fef3c7; 
+    border: 1px solid #fcd34d; 
+    padding: 20px; 
+    border-radius: 8px; 
+    margin-top: 15px;
+    text-align: center;
+}
+.no-suppliers-notice p { 
+    margin: 0 0 8px 0; 
+    font-size: 13px; 
+    color: #92400e;
+    line-height: 1.5;
+}
+.no-suppliers-notice p:last-child { margin-bottom: 0; }
+.no-suppliers-notice a { 
+    color: #dc2626; 
+    text-decoration: underline; 
+    font-weight: 600;
+}
+.no-suppliers-notice a:hover { 
+    text-decoration: none;
+}
+
 /* Input with Icon */
 .input-with-icon { position: relative; display: flex; align-items: center; }
 .input-icon { position: absolute; left: 15px; color: rgba(0,0,0,0.4); pointer-events: none; display: flex; align-items: center; }
@@ -81,8 +119,8 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
   .create-page { padding: 80px 20px 50px; }
   .page-header { padding: 30px 25px; }
   .header-content { flex-direction: column; align-items: flex-start; }
-  .header-actions { width: 100%; flex-direction: column; }
-  .btn-scan, .btn-secondary { width: 100%; justify-content: center; }
+  .header-actions { width: 100%; flex-direction: column; gap: 12px; height: auto; }
+  .btn-scan, .btn-secondary { width: 100%; justify-content: center; display: flex; }
   .page-title { font-size: 26px; }
   .form-section { padding: 25px 20px; }
   .form-grid { grid-template-columns: 1fr; }
@@ -98,4 +136,231 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
   .points-icon { width: 40px; height: 40px; }
   .points-title { font-size: 13px; }
   .points-description { font-size: 11px; }
+}
+
+/* ============================================================
+   ADD ITEM — Extended styles for supplier/product flow
+   Append to the bottom of your existing add_item.css.
+   All classes below are NEW — nothing above is modified.
+   ============================================================ */
+
+/* ── Utility ─────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Step number circles in section titles ────── */
+.step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: #0a0a0a;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 50%;
+    flex-shrink: 0;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+/* ── Mode Toggle ──────────────────────────────── */
+.mode-toggle-section {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 30px;
+    margin-bottom: 20px;
+}
+
+.mode-toggle-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.4);
+    margin: 0 0 14px;
+}
+
+.mode-toggle {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    color: rgba(0,0,0,0.55);
+    background: #fafafa;
+    border: 1px solid rgba(0,0,0,0.12);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.mode-btn:hover {
+    border-color: rgba(0,0,0,0.25);
+    color: #0a0a0a;
+}
+
+.mode-btn.active {
+    background: #0a0a0a;
+    color: #ffffff;
+    border-color: #0a0a0a;
+}
+
+.mode-badge {
+    padding: 2px 8px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.2);
+}
+
+.mode-btn:not(.active) .mode-badge {
+    background: rgba(0,0,0,0.06);
+    color: rgba(0,0,0,0.45);
+}
+
+.mode-hint {
+    margin: 12px 0 0;
+    font-size: 11px;
+    color: rgba(0,0,0,0.45);
+    line-height: 1.6;
+    letter-spacing: 0.2px;
+}
+
+/* ── Supplier Info Card ───────────────────────── */
+.supplier-card {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: #fafafa;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-left: 3px solid #0a0a0a;
+}
+
+.supplier-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.supplier-type-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    background: #0a0a0a;
+    color: #ffffff;
+}
+
+.supplier-meta-item {
+    font-size: 11px;
+    color: rgba(0,0,0,0.55);
+    letter-spacing: 0.2px;
+}
+
+.supplier-meta-item:empty { display: none; }
+
+/* ── Product Preview Card ─────────────────────── */
+.product-preview {
+    margin-top: 16px;
+    border: 1px solid rgba(0,0,0,0.07);
+    background: #fafafa;
+}
+
+.preview-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.preview-row:last-child { border-bottom: none; }
+
+.preview-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.4);
+    min-width: 110px;
+}
+
+.preview-value {
+    font-size: 12px;
+    font-weight: 500;
+    color: #0a0a0a;
+    letter-spacing: 0.3px;
+}
+
+/* ── Profit Bar ───────────────────────────────── */
+.profit-bar {
+    display: flex;
+    border: 1px solid rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.profit-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 18px;
+    border-right: 1px solid rgba(0,0,0,0.07);
+}
+
+.profit-stat:last-child { border-right: none; }
+
+.profit-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.4);
+}
+
+.profit-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0a0a0a;
+    letter-spacing: 0.3px;
+}
+
+/* Colour states */
+.profit-bar.profit-ok   { background: #f0fdf4; border-color: #bbf7d0; }
+.profit-bar.profit-ok   .profit-label { color: rgba(22,101,52,0.6); }
+.profit-bar.profit-ok   .profit-value { color: #166534; }
+
+.profit-bar.profit-low  { background: #fff7ed; border-color: #fed7aa; }
+.profit-bar.profit-low  .profit-label { color: rgba(194,65,12,0.6); }
+.profit-bar.profit-low  .profit-value { color: #c2410c; }
+
+.profit-bar.profit-loss { background: #fef2f2; border-color: #fecaca; }
+.profit-bar.profit-loss .profit-label { color: rgba(185,28,28,0.6); }
+.profit-bar.profit-loss .profit-value { color: #b91c1c; }
+
+/* ── Responsive additions ─────────────────────── */
+@media (max-width: 768px) {
+    .mode-toggle-section { padding: 25px 20px; }
+    .mode-toggle { flex-direction: column; }
+    .mode-btn { width: 100%; justify-content: flex-start; }
+    .supplier-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .profit-bar { flex-direction: column; }
+    .profit-stat { border-right: none; border-bottom: 1px solid rgba(0,0,0,0.07); }
+    .profit-stat:last-child { border-bottom: none; }
+    .preview-label { min-width: 90px; }
 }

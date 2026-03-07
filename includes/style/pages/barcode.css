@@ -143,6 +143,12 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
   .result-actions { flex-direction: column; }
   .result-title { font-size: 20px; }
   .form-grid { grid-template-columns: 1fr; }
+  
+  /* Mobile-specific improvements */
+  #scanner-wrapper { max-width: 100%; border-radius: 0; }
+  .scanner-overlay { width: 90%; height: 50%; }
+  .scan-status { top: 10px; font-size: 11px; padding: 8px 15px; }
+  .barcode-input { font-size: 16px; /* Prevents zoom on iOS */ }
 }
 
 @media (max-width: 480px) {
@@ -152,4 +158,30 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
   .success-icon { width: 40px; height: 40px; }
   .result-title { font-size: 18px; }
   .barcode-input { font-size: 14px; padding: 12px 12px 12px 40px; }
+  
+  /* Extra small mobile improvements */
+  .scanner-page { padding: 70px 15px 40px; }
+  .scanner-section, .manual-section, .product-result { padding: 20px 15px; }
+  .scanner-overlay { width: 95%; height: 60%; }
+}
+
+/* Mobile landscape orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .scanner-page { padding: 60px 15px 30px; }
+  #camera-feed { min-height: 200px; max-height: 300px; }
+  .scanner-overlay { height: 70%; }
+  .page-header { padding: 20px; }
+  .page-title { font-size: 20px; }
+  .page-subtitle { display: none; }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn-primary, .btn-danger, .btn-switch, .btn-success, .btn-secondary-action {
+    min-height: 48px; /* iOS touch target size */
+    font-size: 14px;
+  }
+  
+  .scanner-controls { gap: 15px; }
+  .result-actions { gap: 15px; }
 }

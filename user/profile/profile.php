@@ -2,6 +2,7 @@
 ob_start();
 session_start();
 require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/customer_auth_check.php';
 require_once __DIR__ . '/../../includes/badge_system.php';
 
 // Initialize database connection
@@ -377,7 +378,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="orders-section">
             <div class="section-header">
                 <h2 class="section-title">Recent Activity</h2>
-                <a href="my_inventory.php" class="section-link">View All Items →</a>
+                <a href="../customer/item/my_items.php" class="section-link">View All Items →</a>
             </div>
 
             <?php if ($recent_activities->num_rows > 0): ?>

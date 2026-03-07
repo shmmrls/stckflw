@@ -1,11 +1,6 @@
 <?php
 require_once __DIR__ . '/../../includes/config.php';
-requireLogin();
-
-if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/customer/dashboard.php');
-    exit();
-}
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 
 $conn = getDBConnection();
 
@@ -84,7 +79,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="header-content">
                 <div class="header-info">
                     <h1 class="page-title">Supplier Management</h1>
-                    <p class="page-subtitle">Manage supplier relationships and performance</p>
+                    <p class="page-subtitle">Manage supplier relationships and performance. Register suppliers you've known and loved.</p>
                 </div>
                 <div class="header-actions">
                     <a href="add_supplier.php" class="btn-primary">
@@ -308,13 +303,12 @@ require_once __DIR__ . '/../../includes/header.php';
                                     </svg>
                                     Edit
                                 </a>
-                                <a href="delete_supplier.php?id=<?php echo $supplier['supplier_id']; ?>" class="btn-delete" 
-                                   onclick="return confirm('Are you sure you want to delete this supplier? This will also remove all related products and purchase orders.');">
+                                <button class="btn-delete" onclick="showDeleteModal(<?php echo $supplier['supplier_id']; ?>, '<?php echo htmlspecialchars($supplier['supplier_name']); ?>')" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; font-size: 11px; font-weight: 500; text-decoration: none; border-radius: 6px; transition: all 0.3s ease; border: 1px solid transparent; cursor: pointer; background: #dc2626; color: white; border-color: #dc2626;">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                                     </svg>
                                     Delete
-                                </a>
+                                </button>
                             </div>
                         </div>
                     <?php endwhile; ?>
@@ -332,7 +326,187 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </main>
 
+<!-- Delete Modal -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Delete Supplier</h3>
+            <button type="button" class="modal-close" onclick="hideDeleteModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <div style="width: 48px; height: 48px; margin: 0 auto 20px; background: rgba(185, 28, 28, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #b91c1c;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+            </div>
+            <h4 style="margin: 0 0 12px; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 400; color: #0a0a0a;">Delete Supplier?</h4>
+            <p style="margin: 0 0 20px; font-size: 14px; color: rgba(0, 0, 0, 0.6); line-height: 1.6;">Are you sure you want to delete <strong id="deleteSupplierName"></strong>? This will also remove all related products and purchase orders. This action cannot be undone.</p>
+            
+            <form id="deleteForm" method="POST" action="delete_supplier.php">
+                <input type="hidden" id="deleteSupplierId" name="supplier_id">
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button type="button" class="btn btn-secondary" onclick="hideDeleteModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-container {
+    background: #ffffff;
+    border-radius: 8px;
+    max-width: 480px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.show .modal-container {
+    transform: scale(1);
+}
+
+.modal-header {
+    padding: 24px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding-bottom: 20px;
+}
+
+.modal-header h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #0a0a0a;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-secondary {
+    background: #fafafa;
+    color: #0a0a0a;
+    border: 1px solid rgba(0,0,0,0.15);
+}
+
+.btn-secondary:hover {
+    background: #ffffff;
+    border-color: #0a0a0a;
+}
+
+.btn-danger {
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+@media (max-width: 600px) {
+    .modal-container {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .modal-header,
+    .modal-body {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+</style>
+
+<script>
+function showDeleteModal(supplierId, supplierName) {
+    document.getElementById('deleteSupplierId').value = supplierId;
+    document.getElementById('deleteSupplierName').textContent = supplierName;
+    
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function hideDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('show');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+// Close modal when clicking overlay
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) hideDeleteModal();
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideDeleteModal();
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
 <?php $conn->close(); ?>

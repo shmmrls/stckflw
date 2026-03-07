@@ -2,6 +2,7 @@
 ob_start();
 session_start();
 require_once(__DIR__ . '/../../../includes/config.php');
+require_once(__DIR__ . '/../../../includes/customer_auth_check.php');
 
 // Initialize database connection
 $conn = getDBConnection();

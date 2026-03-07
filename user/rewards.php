@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/customer_auth_check.php';
 require_once __DIR__ . '/../includes/badge_system.php';
 requireLogin();
 

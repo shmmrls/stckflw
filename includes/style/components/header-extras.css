@@ -148,70 +148,255 @@
     .search-close-btn { top: -45px; }
 }
 
+/* Header Right Actions - Groups notification bell and profile */
+.header-right-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
 /* Account Dropdown Styles */
 .account-dropdown-wrapper { 
     position: relative; 
 }
 
-.account-dropdown-btn { position: relative; 
+.account-dropdown-btn { 
+    position: relative; 
     overflow: hidden; 
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .account-profile-img {
-    width: 32px; 
-    height: 32px; 
+    width: 36px; 
+    height: 36px; 
     border-radius: 50%; 
     object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.2); 
+    border: 2px solid rgba(0, 0, 0, 0.1); 
     transition: all 0.3s ease;
 }
 
-.account-dropdown-btn:hover 
-
-.account-profile-img { 
-    border-color: rgba(255, 255, 255, 0.4); 
+.account-dropdown-btn:hover .account-profile-img { 
+    border-color: rgba(0, 0, 0, 0.2); 
     transform: scale(1.05); 
 }
 
 .account-dropdown-menu {
     position: absolute; 
-    top: 100%; right: 0;
-     background: white; 
-     border-radius: 12px;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white; 
+    border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-     min-width: 280px; 
-     opacity: 0;
+    min-width: 280px; 
+    opacity: 0;
     visibility: hidden; 
     transform: translateY(-10px); 
     transition: all 0.3s ease;
-     z-index: 1000;
-      overflow: hidden;
+    z-index: 1000;
+    overflow: hidden;
 }
 
-.account-dropdown-wrapper:hover .account-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(10px); }
-.account-dropdown-header { padding: 20px; background: #ffffff; text-align: center; }
+/* Desktop hover behavior */
+@media (min-width: 769px) {
+    .account-dropdown-wrapper:hover .account-dropdown-menu { 
+        opacity: 1; 
+        visibility: visible; 
+        transform: translateY(0); 
+    }
+}
+
+/* Mobile click behavior */
+@media (max-width: 768px) {
+    .account-dropdown-wrapper.active .account-dropdown-menu { 
+        opacity: 1; 
+        visibility: visible; 
+        transform: translateY(0); 
+    }
+    
+    .account-dropdown-menu {
+        right: -10px;
+        min-width: 260px;
+    }
+}
+
+.account-dropdown-header { 
+    padding: 20px; 
+    background: #ffffff; 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .account-dropdown-avatar {
-    width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255, 255, 255, 0.3); margin-bottom: 12px;
+    width: 50px; 
+    height: 50px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
 }
-.account-dropdown-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
-.account-dropdown-role { font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
-.account-dropdown-divider { height: 1px; background: #e9ecef; margin: 0; }
+
+.account-dropdown-name { 
+    font-weight: 600; 
+    font-size: 15px; 
+    margin-bottom: 4px; 
+    color: #333;
+}
+
+.account-dropdown-role { 
+    font-size: 11px; 
+    color: rgba(0, 0, 0, 0.5); 
+    letter-spacing: 1px; 
+    text-transform: uppercase; 
+}
+
+.account-dropdown-divider { 
+    height: 1px; 
+    background: #e9ecef; 
+    margin: 0; 
+}
+
 .account-dropdown-item {
-    display: flex; align-items: center; padding: 16px 20px; color: #495057; text-decoration: none;
-    transition: all 0.3s ease; border-bottom: 1px solid #f8f9fa;
+    display: flex; 
+    align-items: center; 
+    padding: 16px 20px; 
+    color: #495057; 
+    text-decoration: none;
+    transition: all 0.3s ease; 
+    border-bottom: 1px solid #f8f9fa;
 }
-.account-dropdown-item:last-child { border-bottom: none; }
-.account-dropdown-item:hover { background: #f8f9fa; color: #7ed957; text-decoration: none; }
-.account-dropdown-item svg { margin-right: 12px; flex-shrink: 0; }
-.account-dropdown-item span { font-weight: 500; }
+
+.account-dropdown-item:last-child { 
+    border-bottom: none; 
+}
+
+.account-dropdown-item:hover { 
+    background: #f8f9fa; 
+    color: #7ed957; 
+    text-decoration: none; 
+}
+
+.account-dropdown-item svg { 
+    margin-right: 12px; 
+    flex-shrink: 0; 
+}
+
+.account-dropdown-item span { 
+    font-weight: 500; 
+}
 
 /* Mobile Responsive for Account Dropdown */
 @media (max-width: 768px) {
-    .account-dropdown-menu { right: -20px; min-width: 260px; }
-    .account-dropdown-header { padding: 16px; }
-    .account-dropdown-avatar { width: 50px; height: 50px; }
-    .account-dropdown-item { padding: 14px 16px; }
+    .header-right-actions {
+        gap: 4px;
+    }
+    
+    .account-profile-img {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .account-dropdown-header { 
+        padding: 16px; 
+    }
+    
+    .account-dropdown-avatar { 
+        width: 45px; 
+        height: 45px; 
+    }
+    
+    .account-dropdown-name {
+        font-size: 14px;
+    }
+    
+    .account-dropdown-item { 
+        padding: 14px 16px; 
+    }
 }
 
-/* Additional styles for user role badge from customer header */
-.account-dropdown-role { font-size: 11px; color: rgba(0, 0, 0, 0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+@media (max-width: 480px) {
+    .account-profile-img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .account-dropdown-avatar { 
+        width: 40px; 
+        height: 40px; 
+    }
+}
+
+/* Notification Bell Navigation Integration */
+.notification-bell-nav {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.notif-bell-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.notif-bell-btn {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0a0a0a;
+    position: relative;
+    text-decoration: none;
+}
+
+.notif-bell-btn:hover {
+    background: rgba(10, 10, 10, 0.1);
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #0a0a0a;
+}
+
+.notif-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #dc2626;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    line-height: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .notif-bell-btn {
+        padding: 6px 8px;
+    }
+    
+    .notif-badge {
+        font-size: 9px;
+        padding: 1px 4px;
+        min-width: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .notif-bell-btn {
+        padding: 4px 6px;
+    }
+}

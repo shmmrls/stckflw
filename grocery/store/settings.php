@@ -1,11 +1,5 @@
 <?php
-require_once __DIR__ . '/../../includes/config.php';
-requireLogin();
-
-if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/dashboard.php');
-    exit();
-}
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 
 $conn = getDBConnection();
 $user_id = getCurrentUserId();

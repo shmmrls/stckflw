@@ -4,7 +4,7 @@ requireLogin();
 
 // Verify user is grocery admin
 if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $GLOBALS['baseUrl'] . '/user/customer/dashboard.php');
+    header('Location: ' . $GLOBALS['baseUrl'] . '/user/dashboard.php');
     exit();
 }
 

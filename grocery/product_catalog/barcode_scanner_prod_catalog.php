@@ -1,20 +1,10 @@
 <?php
+ob_start(); // ← Add this as the very first line
 require_once __DIR__ . '/../../includes/config.php';
-requireLogin();
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 
 $conn = getDBConnection();
 $user_id = getCurrentUserId();
-
-// Get user's role
-$user_stmt = $conn->prepare("SELECT role FROM users WHERE user_id = ?");
-$user_stmt->bind_param("i", $user_id);
-$user_stmt->execute();
-$user_result = $user_stmt->get_result();
-$user_data = $user_result->fetch_assoc();
-
-if ($user_data['role'] !== 'grocery_admin') {
-    die("Access denied. Only grocery admins can access this page.");
-}
 
 // Handle barcode lookup
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['barcode'])) {
@@ -83,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
         (barcode, product_name, brand, category_id, default_unit, typical_shelf_life_days, description, is_verified) 
         VALUES (?, ?, ?, ?, ?, ?, ?, 1)
     ");
-    $insert_stmt->bind_param("sssisss", $barcode, $product_name, $brand, $category_id, $default_unit, $shelf_life, $description);
+    $insert_stmt->bind_param("sssisis", $barcode, $product_name, $brand, $category_id, $default_unit, $shelf_life, $description);
     
     if ($insert_stmt->execute()) {
         header('Content-Type: application/json');
@@ -109,6 +99,9 @@ require_once __DIR__ . '/../../includes/header.php';
 $categories_result = $conn->query("SELECT category_id, category_name FROM categories ORDER BY category_name");
 ?>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 
@@ -338,7 +331,16 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
     
     async function getDeviceId() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            // Request permission with mobile-friendly constraints
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                }
+            };
+            
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             stream.getTracks().forEach(track => track.stop());
             
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -348,6 +350,7 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
                 throw new Error('No video input devices found');
             }
             
+            // Try to find device with matching facing mode
             for (const device of videoDevices) {
                 try {
                     const capabilities = device.getCapabilities ? device.getCapabilities() : {};
@@ -359,6 +362,7 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
                 }
             }
             
+            // Fallback: prefer back camera for 'environment', front for 'user'
             if (facingMode === 'environment' && videoDevices.length > 1) {
                 return videoDevices[videoDevices.length - 1].deviceId;
             }
@@ -505,6 +509,11 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
                 scanResultEl.className = 'scan-status success';
                 isScanning = false;
                 
+                // Vibrate on mobile devices for better feedback
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(200);
+                }
+                
                 codeReader.reset();
                 const videoElement = document.getElementById('camera-feed');
                 videoElement.pause();
@@ -513,6 +522,15 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
             }
             if (err && !(err instanceof ZXing.NotFoundException)) {
                 console.error('Scanning error:', err);
+            }
+        }, {
+            // Mobile-friendly constraints
+            constraints: {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 }
+                }
             }
         }).catch(error => {
             console.error('Failed to start scanning:', error);
@@ -643,48 +661,69 @@ $categories_result = $conn->query("SELECT category_id, category_name FROM catego
     });
     
     document.getElementById('add-to-catalog').addEventListener('click', function() {
-        const productName = document.getElementById('new-product-name').value.trim();
-        
-        if (!productName) {
-            alert('Please enter a product name');
-            return;
-        }
-        
-        const formData = new URLSearchParams({
-            add_product: '1',
-            barcode: currentBarcode,
-            product_name: productName,
-            brand: document.getElementById('new-brand').value.trim(),
-            category_id: document.getElementById('new-category').value,
-            default_unit: document.getElementById('new-unit').value,
-            shelf_life: document.getElementById('new-shelf-life').value,
-            description: document.getElementById('new-description').value.trim()
-        });
-        
-        fetch('barcode_scanner_prod_catalog.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSuccess(data.message);
-                setTimeout(() => {
-                    document.getElementById('product-result').style.display = 'none';
-                    document.getElementById('scanner-result').style.display = 'none';
-                    currentBarcode = null;
-                    startCamera();
-                }, 2000);
-            } else {
-                showError(data.message);
-            }
-        })
-        .catch(error => {
-            showError('Error adding product to catalog');
-            console.error(error);
-        });
+    const productName = document.getElementById('new-product-name').value.trim();
+    const barcode = document.getElementById('new-barcode').value.trim(); // ← read from input, not global
+
+    if (!productName) {
+        alert('Please enter a product name');
+        return;
+    }
+
+    if (!barcode) {
+        alert('No barcode found. Please scan or enter a barcode first.');
+        return;
+    }
+
+    // Disable button to prevent double submissions
+    this.disabled = true;
+    this.textContent = 'Saving...';
+
+    const formData = new URLSearchParams({
+        add_product: '1',
+        barcode: barcode,           // ← use local variable
+        product_name: productName,
+        brand: document.getElementById('new-brand').value.trim(),
+        category_id: document.getElementById('new-category').value,
+        default_unit: document.getElementById('new-unit').value,
+        shelf_life: document.getElementById('new-shelf-life').value,
+        description: document.getElementById('new-description').value.trim()
     });
+
+    fetch('barcode_scanner_prod_catalog.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Server returned ' + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showSuccess(data.message);
+            setTimeout(() => {
+                document.getElementById('product-result').style.display = 'none';
+                document.getElementById('scanner-result').style.display = 'none';
+                currentBarcode = null;
+                startCamera();
+            }, 2000);
+        } else {
+            showError(data.message || 'Unknown error from server');
+        }
+    })
+    .catch(error => {
+        showError('Error adding product: ' + error.message);
+        console.error(error);
+    })
+    .finally(() => {
+        this.disabled = false;
+        this.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add to Catalog`;
+    });
+});
     
     document.getElementById('scan-another').addEventListener('click', function() {
         document.getElementById('product-result').style.display = 'none';

@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Verify user is grocery admin
 if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/customer/dashboard.php');
+    header('Location: ' . $baseUrl . '/user/dashboard.php');
     exit();
 }
 

@@ -1,0 +1,431 @@
+/* ============================================
+   item_forms.css — Edit & Delete Item Pages
+   Matches StockFlow aesthetic:
+   Montserrat + Playfair Display, monochromatic
+   Save to: includes/style/pages/item_forms.css
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap');
+
+/* ── Page Layout ────────────────────────────── */
+.item-form-page {
+    min-height: 100vh;
+    padding: 100px 30px 60px;
+    background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.item-form-container {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+/* ── Page Header ────────────────────────────── */
+.page-header {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 40px;
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+}
+
+.page-header:hover {
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-info h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin: 0 0 6px;
+}
+
+.header-info p {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: rgba(0,0,0,0.45);
+    margin: 0;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.6);
+    background: #f5f5f5;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.08);
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.btn-back:hover {
+    background: #ebebeb;
+    color: #0a0a0a;
+    border-color: rgba(0,0,0,0.15);
+}
+
+/* ── Alerts ─────────────────────────────────── */
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    border: 1px solid transparent;
+}
+
+.alert svg { flex-shrink: 0; margin-top: 1px; }
+
+.alert-error   { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.alert-success { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+
+/* ── Form Card ───────────────────────────────── */
+.form-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 40px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.form-card:hover {
+    border-color: rgba(0,0,0,0.11);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.04);
+}
+
+.form-card-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.35);
+    margin: 0 0 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+/* ── Form Grid ───────────────────────────────── */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+/* ── Labels & Inputs ─────────────────────────── */
+.form-label {
+    font-size: 9px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.55);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 11px 13px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: #0a0a0a;
+    background: #fafafa;
+    border: 1px solid rgba(0,0,0,0.12);
+    outline: none;
+    transition: all 0.25s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    letter-spacing: 0.3px;
+    border-radius: 0;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    background: #ffffff;
+    border-color: #0a0a0a;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: rgba(0,0,0,0.28);
+    font-style: italic;
+}
+
+.form-input[readonly] {
+    background: #f0f0f0;
+    color: rgba(0,0,0,0.45);
+    cursor: not-allowed;
+    border-color: rgba(0,0,0,0.06);
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+}
+
+.form-hint {
+    font-size: 10px;
+    color: rgba(0,0,0,0.38);
+    letter-spacing: 0.2px;
+    margin-top: 2px;
+}
+
+/* ── Status Badge ────────────────────────────── */
+.status-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+    margin-top: 4px;
+}
+
+.status-fresh       { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.status-near_expiry { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.status-expired     { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+/* ── Action Row ──────────────────────────────── */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 26px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border-radius: 0;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: #0a0a0a;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #333333;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.btn-cancel {
+    background: #f0f0f0;
+    color: #555555;
+}
+
+.btn-cancel:hover {
+    background: #e3e3e3;
+    transform: translateY(-1px);
+}
+
+/* ── Delete Page Specific ────────────────────── */
+.delete-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-left: 3px solid #b91c1c;
+    padding: 40px;
+    margin-bottom: 20px;
+}
+
+.delete-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 30px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.delete-warning-icon {
+    width: 48px;
+    height: 48px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #b91c1c;
+}
+
+.delete-warning-text h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin: 0 0 6px;
+}
+
+.delete-warning-text p {
+    font-size: 12px;
+    color: rgba(0,0,0,0.5);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* Item Summary in Delete */
+.item-summary {
+    background: #fafafa;
+    border: 1px solid rgba(0,0,0,0.07);
+    padding: 24px;
+    margin-bottom: 28px;
+}
+
+.item-summary-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.summary-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    font-size: 12px;
+    gap: 12px;
+}
+
+.summary-row:last-child { border-bottom: none; }
+
+.summary-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.4);
+    min-width: 110px;
+}
+
+.summary-value {
+    color: #0a0a0a;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.summary-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.badge-fresh       { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.badge-near_expiry { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.badge-expired     { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+/* Delete Buttons */
+.delete-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-danger {
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+.btn-danger:hover {
+    background: #991b1b;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(185,28,28,0.25);
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+    .item-form-page { padding: 80px 20px 50px; }
+
+    .page-header,
+    .form-card,
+    .delete-card { padding: 25px 20px; }
+
+    .header-content { flex-direction: column; align-items: flex-start; }
+
+    .header-info h1 { font-size: 22px; }
+
+    .form-grid { grid-template-columns: 1fr; }
+
+    .form-group.full-width { grid-column: 1; }
+
+    .form-actions,
+    .delete-actions { flex-direction: column; }
+
+    .btn { width: 100%; justify-content: center; }
+
+    .delete-warning { flex-direction: column; gap: 14px; }
+
+    .summary-label { min-width: 85px; }
+}
+
+@media (max-width: 480px) {
+    .header-info h1 { font-size: 20px; }
+}

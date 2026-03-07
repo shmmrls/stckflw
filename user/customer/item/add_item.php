@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../../includes/config.php';
+require_once __DIR__ . '/../../../includes/customer_auth_check.php';
 requireLogin();
 
 $conn = getDBConnection();
@@ -66,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       $purchased_from, $user_id);
     
     if ($stmt->execute()) {
-        $item_id = $conn->insert_id();
+        $item_id = $conn->insert_id;
         
         // Award points (+5 for adding item)
         $points_stmt = $conn->prepare("
@@ -153,7 +154,7 @@ require_once __DIR__ . '/../../../includes/header.php';
                         </svg>
                         Scan Barcode
                     </a>
-                    <a href="../dashboard.php" class="btn-secondary">
+                    <a href="../../dashboard.php" class="btn-secondary">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
                         </svg>
@@ -299,7 +300,7 @@ require_once __DIR__ . '/../../../includes/header.php';
                     </svg>
                     Add Item & Earn Points
                 </button>
-                <a href="../dashboard.php" class="btn-cancel">Cancel</a>
+                <a href="../../dashboard.php" class="btn-cancel">Cancel</a>
             </div>
         </form>
     </div>

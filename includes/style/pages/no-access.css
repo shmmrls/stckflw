@@ -1,0 +1,85 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Montserrat', sans-serif; background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%); color: #1a1a1a; line-height: 1.6; }
+.no-access-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 100px 30px 60px; }
+.no-access-container { max-width: 600px; width: 100%; text-align: center; }
+.no-access-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); padding: 60px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+.no-access-icon { width: 80px; height: 80px; margin: 0 auto 30px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fecaca; }
+.no-access-icon svg { color: #b91c1c; }
+.no-access-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 400; color: #0a0a0a; margin-bottom: 15px; }
+.no-access-message { font-size: 15px; color: rgba(0,0,0,0.6); line-height: 1.8; margin-bottom: 10px; }
+.no-access-submessage { font-size: 13px; color: rgba(0,0,0,0.5); margin-bottom: 35px; font-style: italic; }
+.no-access-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+.btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: #0a0a0a; color: #ffffff; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; transition: all 0.3s ease; border: none; cursor: pointer; }
+.btn-primary:hover { background: #1a1a1a; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); color: #ffffff; }
+.btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: #fafafa; color: #0a0a0a; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; border: 1px solid rgba(0,0,0,0.15); transition: all 0.3s ease; }
+.btn-secondary:hover { background: #0a0a0a; color: #ffffff; border-color: #0a0a0a; transform: translateY(-2px); }
+.info-box { margin-top: 40px; padding: 20px; background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; text-align: left; }
+.info-box-content { display: flex; gap: 15px; align-items: flex-start; }
+.info-box svg { flex-shrink: 0; color: #f59e0b; margin-top: 2px; }
+.info-box-text { font-size: 13px; color: #92400e; line-height: 1.6; }
+.info-box-title { font-weight: 600; margin-bottom: 5px; }
+
+.role-info {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+}
+
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.role-badge.customer {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #90caf9;
+}
+
+.role-badge.admin {
+    background-color: #fff3e0;
+    color: #f57c00;
+    border: 1px solid #ffb74d;
+}
+
+.role-badge svg {
+    flex-shrink: 0;
+}
+
+.back-link {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.back-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.back-link a:hover {
+    color: #333;
+}
+
+.back-link svg {
+    transition: transform 0.3s ease;
+}
+
+.back-link a:hover svg {
+    transform: translateX(-3px);
+}
+@media (max-width: 768px) { .no-access-page { padding: 80px 20px 50px; } .no-access-card { padding: 40px 25px; } .no-access-title { font-size: 26px; } .no-access-message { font-size: 14px; } .no-access-actions { flex-direction: column; } .btn-primary, .btn-secondary { width: 100%; justify-content: center; } }
+@media (max-width: 480px) { .no-access-icon { width: 60px; height: 60px; } .no-access-icon svg { width: 28px; height: 28px; } .no-access-title { font-size: 22px; } }
+
+

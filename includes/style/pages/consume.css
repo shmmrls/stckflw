@@ -1,0 +1,344 @@
+/* ============================================
+   consume.css — Consume Item Page
+   Matches StockFlow dashboard aesthetic:
+   Montserrat + Playfair Display, monochromatic
+   Save to: includes/styles/pages/consume.css
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap');
+
+/* ── Page Layout ────────────────────────────── */
+.consume-page {
+    min-height: 100vh;
+    padding: 100px 30px 60px;
+    background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
+    font-family: 'Montserrat', sans-serif;
+}
+
+.consume-container {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+/* ── Page Header ────────────────────────────── */
+.consume-header {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 40px;
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+}
+
+.consume-header:hover {
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.consume-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin: 0 0 6px;
+}
+
+.consume-header p {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: rgba(0,0,0,0.45);
+    margin: 0;
+}
+
+/* ── Alerts ─────────────────────────────────── */
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    border: 1px solid transparent;
+}
+
+.alert svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.alert-error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+/* ── Item Info Card ──────────────────────────── */
+.item-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 30px;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.item-card:hover {
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+}
+
+.item-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin: 0 0 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.item-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.item-detail-row:last-child {
+    border-bottom: none;
+}
+
+.item-detail-row svg {
+    flex-shrink: 0;
+    color: rgba(0,0,0,0.35);
+}
+
+.item-detail-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,0.45);
+    font-weight: 600;
+    min-width: 100px;
+}
+
+.item-detail-value {
+    font-size: 13px;
+    color: #0a0a0a;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* ── Form Card ───────────────────────────────── */
+.form-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 30px;
+    margin-bottom: 20px;
+}
+
+.form-card-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.4);
+    margin: 0 0 25px;
+}
+
+/* ── Form Elements ───────────────────────────── */
+.form-group {
+    margin-bottom: 22px;
+}
+
+.form-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: rgba(0,0,0,0.6);
+    margin-bottom: 9px;
+}
+
+.form-label svg {
+    color: rgba(0,0,0,0.4);
+}
+
+.form-input,
+.form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: #0a0a0a;
+    background: #fafafa;
+    border: 1px solid rgba(0,0,0,0.12);
+    outline: none;
+    transition: all 0.25s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    letter-spacing: 0.3px;
+    border-radius: 0;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    background: #ffffff;
+    border-color: #0a0a0a;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: rgba(0,0,0,0.3);
+    font-style: italic;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.6;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    color: rgba(0,0,0,0.4);
+}
+
+/* ── Buttons ─────────────────────────────────── */
+.btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border-radius: 0;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: #0a0a0a;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #333333;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+    transform: translateY(-1px);
+}
+
+/* ── Success State ───────────────────────────── */
+.success-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-left: 3px solid #166534;
+    padding: 30px;
+    margin-bottom: 20px;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 12px 24px;
+    background: #0a0a0a;
+    color: #ffffff;
+    transition: all 0.25s ease;
+    border-radius: 0;
+}
+
+.back-link:hover {
+    background: #333333;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+    .consume-page {
+        padding: 80px 20px 50px;
+    }
+
+    .consume-header,
+    .item-card,
+    .form-card {
+        padding: 25px 20px;
+    }
+
+    .consume-header h2 {
+        font-size: 22px;
+    }
+
+    .item-detail-label {
+        min-width: 80px;
+    }
+
+    .btn-row {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .consume-header h2 {
+        font-size: 20px;
+    }
+
+    .item-detail-row {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+}

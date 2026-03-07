@@ -3,10 +3,12 @@
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'stock_flow');
+// define('DB_NAME', 'stock_flow');
+ define('DB_NAME', 'stock_flow_with_demo_data');
 
 // Base URL for the application
-$baseUrl = '/StockFlowDraft';
+$baseUrl = '/StockFlow';
+// $baseUrl = '';
 
 // Create database connection
 function getDBConnection() {

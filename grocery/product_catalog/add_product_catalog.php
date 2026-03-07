@@ -1,117 +1,139 @@
 <?php
+ob_start();
 require_once __DIR__ . '/../../includes/config.php';
-requireLogin();
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 
-// Verify user is grocery admin
-if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/customer/dashboard.php');
+// ─────────────────────────────────────────
+// AJAX: Barcode lookup
+// ─────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['barcode']) && !isset($_POST['add_product'])) {
+    $barcode = trim($_POST['barcode']);
+
+    $stmt = $conn->prepare("
+        SELECT pc.*, c.category_name
+        FROM product_catalog pc
+        LEFT JOIN categories c ON pc.category_id = c.category_id
+        WHERE pc.barcode = ?
+    ");
+    $stmt->bind_param("s", $barcode);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $product = $result->fetch_assoc();
+
+        $log_stmt = $conn->prepare("
+            INSERT INTO barcode_scan_history (user_id, barcode, scan_type, product_found)
+            VALUES (?, ?, 'lookup', 1)
+        ");
+        $log_stmt->bind_param("is", $user_id, $barcode);
+        $log_stmt->execute();
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'product' => $product, 'exists' => true]);
+    } else {
+        $log_stmt = $conn->prepare("
+            INSERT INTO barcode_scan_history (user_id, barcode, scan_type, product_found)
+            VALUES (?, ?, 'lookup', 0)
+        ");
+        $log_stmt->bind_param("is", $user_id, $barcode);
+        $log_stmt->execute();
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'exists'  => false,
+            'message' => 'Product not found in catalog. You can add it as a new product.'
+        ]);
+    }
+    $conn->close();
     exit();
 }
 
-$conn = getDBConnection();
-$user_id = getCurrentUserId();
+// ─────────────────────────────────────────
+// AJAX: Add new product to catalog
+// ─────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
+    $barcode      = trim($_POST['barcode']      ?? '');
+    $product_name = trim($_POST['product_name'] ?? '');
+    $brand        = trim($_POST['brand']        ?? '');
+    $default_unit = trim($_POST['default_unit'] ?? 'pcs');
+    $description  = trim($_POST['description']  ?? '');
 
-// Get categories
-$categories = $conn->query("SELECT * FROM categories ORDER BY category_name");
+    // Nullable integer fields — store NULL when empty
+    $category_id = (isset($_POST['category_id']) && $_POST['category_id'] !== '') ? intval($_POST['category_id']) : null;
+    $shelf_life  = (isset($_POST['shelf_life'])  && $_POST['shelf_life']  !== '') ? intval($_POST['shelf_life'])  : null;
 
-// Pre-fill from barcode scan
-$barcode = $_GET['barcode'] ?? '';
-$prefill_name = $_GET['product_name'] ?? '';
-
-$error = '';
-$success = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $barcode = trim($_POST['barcode']);
-    $product_name = trim($_POST['product_name']);
-    $brand = trim($_POST['brand']);
-    $category_id = $_POST['category_id'] ?: NULL;
-    $default_unit = trim($_POST['default_unit']);
-    $typical_shelf_life_days = $_POST['typical_shelf_life_days'] ?: NULL;
-    $description = trim($_POST['description']);
-    $image_url = trim($_POST['image_url']);
-    
-    // Check if barcode already exists
-    $check_stmt = $conn->prepare("SELECT catalog_id FROM product_catalog WHERE barcode = ?");
-    $check_stmt->bind_param("s", $barcode);
-    $check_stmt->execute();
-    $existing = $check_stmt->get_result()->fetch_assoc();
-    
-    if ($existing) {
-        $error = "A product with this barcode already exists in the catalog.";
-    } else {
-        // Insert product into catalog
-        $stmt = $conn->prepare("
-            INSERT INTO product_catalog 
-            (barcode, product_name, brand, category_id, default_unit, typical_shelf_life_days, 
-             description, image_url, is_verified) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-        ");
-        $stmt->bind_param("sssisiss", 
-            $barcode, $product_name, $brand, $category_id, $default_unit, 
-            $typical_shelf_life_days, $description, $image_url
-        );
-        
-        if ($stmt->execute()) {
-            $catalog_id = $conn->insert_id;
-            
-            // Log barcode scan
-            if (!empty($barcode)) {
-                $scan_log = $conn->prepare("
-                    INSERT INTO barcode_scan_history (user_id, barcode, scan_type, product_found) 
-                    VALUES (?, ?, 'add_item', 1)
-                ");
-                $scan_log->bind_param("is", $user_id, $barcode);
-                $scan_log->execute();
-            }
-            
-            $success = "Product added to catalog successfully! Other stores can now use this product data.";
-        } else {
-            $error = "Failed to add product to catalog. Please try again.";
-        }
+    if ($barcode === '' || $product_name === '') {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Barcode and product name are required.']);
+        $conn->close();
+        exit();
     }
+
+    $insert_stmt = $conn->prepare("
+        INSERT INTO product_catalog
+            (barcode, product_name, brand, category_id, default_unit, typical_shelf_life_days, description, is_verified)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    ");
+
+    // Use all strings — MySQL casts to the correct column types automatically,
+    // and PHP null passed as string becomes NULL for nullable columns.
+    $insert_stmt->bind_param(
+        "sssssss",
+        $barcode,
+        $product_name,
+        $brand,
+        $category_id,   // null-safe: PHP null → SQL NULL
+        $default_unit,
+        $shelf_life,    // null-safe: PHP null → SQL NULL
+        $description
+    );
+
+    if ($insert_stmt->execute()) {
+        $new_id = $insert_stmt->insert_id;
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success'    => true,
+            'message'    => 'Product added to catalog successfully!',
+            'catalog_id' => $new_id
+        ]);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database error: ' . $conn->error
+        ]);
+    }
+    $conn->close();
+    exit();
 }
 
-$pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/add_item.css">';
+// ─────────────────────────────────────────
+// Normal page render
+// ─────────────────────────────────────────
+$pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/barcode.css">';
 require_once __DIR__ . '/../../includes/header.php';
+
+$categories_result = $conn->query("SELECT category_id, category_name FROM categories ORDER BY category_name");
 ?>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
 
-<main class="create-page">
-    <div class="create-container">
-        
-        <?php if ($error): ?>
-            <div class="alert alert-error">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
-                <?php echo htmlspecialchars($error); ?>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($success): ?>
-            <div class="alert alert-success">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                <?php echo htmlspecialchars($success); ?>
-            </div>
-        <?php endif; ?>
+<main class="scanner-page">
+    <div class="scanner-container">
 
         <div class="page-header">
             <div class="header-content">
                 <div class="header-info">
-                    <h1 class="page-title">Add to Product Catalog</h1>
-                    <p class="page-subtitle">Create a master product record for barcode scanning</p>
+                    <h1 class="page-title">Product Catalog Scanner</h1>
+                    <p class="page-subtitle">Scan and manage products in the master catalog</p>
                 </div>
                 <div class="header-actions">
-                    <a href="barcode_scanner_prod_catalog.php" class="btn-scan">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        Scan Barcode
-                    </a>
                     <a href="view_product_catalog.php" class="btn-secondary">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
@@ -122,172 +144,503 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
         </div>
 
-        <form method="POST" action="" class="create-form">
-            
-            <div class="form-section">
-                <div class="section-header">
-                    <h2 class="section-title">Barcode & Identification</h2>
-                    <p class="section-description">Unique identifiers for this product</p>
+        <div id="scanner-result" class="alert alert-success" style="display:none;"></div>
+        <div id="scanner-error"  class="alert alert-error"   style="display:none;"></div>
+
+        <!-- ── Camera scanner ── -->
+        <div class="scanner-section">
+            <div class="section-header">
+                <h2 class="section-title">Camera Scanner</h2>
+                <p class="section-description">Point your camera at a product barcode</p>
+            </div>
+
+            <div id="scanner-wrapper">
+                <video id="camera-feed" playsinline></video>
+                <canvas id="capture-canvas"></canvas>
+                <div class="scanner-overlay">
+                    <div class="scanner-line"></div>
                 </div>
-                
+                <div class="scan-status" id="scan-result" style="display:none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    Scanning...
+                </div>
+            </div>
+
+            <div class="scanner-controls">
+                <button id="start-scan"    class="btn-primary">Start Camera</button>
+                <button id="stop-scan"     class="btn-danger"         style="display:none;">Stop Camera</button>
+                <button id="switch-camera" class="btn-switch"         style="display:none;">Switch Camera</button>
+            </div>
+        </div>
+
+        <!-- ── Manual entry ── -->
+        <div class="manual-section">
+            <div class="section-header">
+                <h2 class="section-title">Manual Entry</h2>
+                <p class="section-description">Enter barcode number directly</p>
+            </div>
+
+            <form id="manual-form" class="manual-form">
+                <div class="form-group">
+                    <label class="form-label">Barcode Number</label>
+                    <div class="barcode-input-wrapper">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
+                        <input type="text" id="manual-barcode" class="barcode-input"
+                               placeholder="Enter barcode number" autocomplete="off">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    Look Up Product
+                </button>
+            </form>
+        </div>
+
+        <!-- ── Result panel ── -->
+        <div id="product-result" class="product-result" style="display:none;">
+            <div class="result-header">
+                <div class="success-icon" id="result-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <div class="result-title" id="result-title">Product Found!</div>
+            </div>
+
+            <!-- Existing product details -->
+            <div class="product-details" id="existing-product-details">
+                <div class="detail-row"><span class="detail-label">Product Name</span><span class="detail-value" id="product-name"></span></div>
+                <div class="detail-row"><span class="detail-label">Brand</span><span class="detail-value" id="product-brand"></span></div>
+                <div class="detail-row"><span class="detail-label">Category</span><span class="detail-value" id="product-category"></span></div>
+                <div class="detail-row"><span class="detail-label">Default Unit</span><span class="detail-value" id="product-unit"></span></div>
+                <div class="detail-row"><span class="detail-label">Shelf Life</span><span class="detail-value" id="product-shelf-life"></span></div>
+                <div class="detail-row"><span class="detail-label">Barcode</span><span class="detail-value barcode-value" id="product-barcode"></span></div>
+            </div>
+
+            <!-- Add new product form -->
+            <form id="add-product-form" style="display:none;">
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label class="form-label">Barcode *</label>
-                        <div class="input-with-icon">
-                            <span class="input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                                </svg>
-                            </span>
-                            <input type="text" id="barcode" name="barcode" class="form-input with-icon" value="<?php echo htmlspecialchars($barcode); ?>" placeholder="Scan or enter barcode number" required>
-                        </div>
-                        <small class="form-hint">This barcode will be used for quick product lookup</small>
+                        <label class="form-label">Barcode</label>
+                        <input type="text" id="new-barcode" class="form-input" readonly>
                     </div>
-
                     <div class="form-group full-width">
                         <label class="form-label">Product Name *</label>
-                        <input type="text" id="product_name" name="product_name" class="form-input" value="<?php echo htmlspecialchars($prefill_name); ?>" placeholder="Enter full product name" required>
-                        <small class="form-hint">Official product name as it appears on packaging</small>
+                        <input type="text" id="new-product-name" class="form-input" required placeholder="Enter product name">
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Brand</label>
-                        <input type="text" id="brand" name="brand" class="form-input" placeholder="e.g., Alaska, Del Monte, Nestle">
-                        <small class="form-hint">Manufacturer or brand name</small>
+                        <input type="text" id="new-brand" class="form-input" placeholder="Enter brand name">
                     </div>
-
                     <div class="form-group">
                         <label class="form-label">Category</label>
-                        <select id="category_id" name="category_id" class="form-select">
-                            <option value="">Select category (optional)</option>
-                            <?php 
-                            $categories->data_seek(0);
-                            while ($cat = $categories->fetch_assoc()): 
-                            ?>
+                        <select id="new-category" class="form-select">
+                            <option value="">Select Category</option>
+                            <?php while ($cat = $categories_result->fetch_assoc()): ?>
                                 <option value="<?php echo $cat['category_id']; ?>">
                                     <?php echo htmlspecialchars($cat['category_name']); ?>
                                 </option>
                             <?php endwhile; ?>
                         </select>
                     </div>
-                </div>
-            </div>
-
-            <div class="form-section">
-                <div class="section-header">
-                    <h2 class="section-title">Default Product Specs</h2>
-                    <p class="section-description">Standard information for this product</p>
-                </div>
-
-                <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Default Unit *</label>
-                        <input type="text" id="default_unit" name="default_unit" class="form-input" value="pcs" placeholder="e.g., pcs, kg, liters, bottles" required>
-                        <small class="form-hint">Common measurement unit</small>
+                        <select id="new-unit" class="form-select" required>
+                            <option value="pcs">Pieces</option>
+                            <option value="kg">Kilograms</option>
+                            <option value="g">Grams</option>
+                            <option value="L">Liters</option>
+                            <option value="mL">Milliliters</option>
+                            <option value="box">Box</option>
+                            <option value="pack">Pack</option>
+                            <option value="can">Can</option>
+                            <option value="bottle">Bottle</option>
+                        </select>
                     </div>
-
                     <div class="form-group">
-                        <label class="form-label">Typical Shelf Life (Days)</label>
-                        <input type="number" id="typical_shelf_life_days" name="typical_shelf_life_days" class="form-input" min="0" placeholder="e.g., 365, 30, 7">
-                        <small class="form-hint">Average shelf life from production date</small>
+                        <label class="form-label">Typical Shelf Life (days)</label>
+                        <input type="number" id="new-shelf-life" class="form-input" min="0" placeholder="e.g., 365">
                     </div>
-
                     <div class="form-group full-width">
-                        <label class="form-label">Product Description</label>
-                        <textarea id="description" name="description" class="form-textarea" rows="4" placeholder="Enter product description, ingredients, or additional details..."></textarea>
-                        <small class="form-hint">Optional details about the product</small>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label class="form-label">Product Image URL</label>
-                        <div class="input-with-icon">
-                            <span class="input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                                </svg>
-                            </span>
-                            <input type="url" id="image_url" name="image_url" class="form-input with-icon" placeholder="https://example.com/product-image.jpg">
-                        </div>
-                        <small class="form-hint">Optional: URL to product image for reference</small>
+                        <label class="form-label">Description</label>
+                        <textarea id="new-description" class="form-textarea" rows="3"
+                                  placeholder="Enter product description (optional)"></textarea>
                     </div>
                 </div>
-            </div>
+            </form>
 
-            <div class="form-section points-section">
-                <div class="points-info">
-                    <div class="points-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                        </svg>
-                    </div>
-                    <div class="points-text">
-                        <div class="points-title">About Product Catalog</div>
-                        <div class="points-description">Products added to the catalog become available for <strong>all stores</strong> to use. When scanning a barcode, if it exists in the catalog, product details will auto-fill to save time.</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary">
+            <div class="result-actions">
+                <button id="add-to-catalog" class="btn-success" style="display:none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
-                    Add to Product Catalog
+                    Add to Catalog
                 </button>
-                <a href="product_catalog.php" class="btn-cancel">Cancel</a>
+                <button id="scan-another" class="btn-secondary-action">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    Scan Another
+                </button>
             </div>
-        </form>
-    </div>
+        </div>
+
+    </div><!-- /.scanner-container -->
 </main>
 
 <script>
-    // Auto-calculate expiry suggestion based on shelf life
-    document.getElementById('typical_shelf_life_days').addEventListener('input', function() {
-        const shelfLife = parseInt(this.value) || 0;
-        if (shelfLife > 0) {
-            const hint = this.parentElement.querySelector('.form-hint');
-            const years = Math.floor(shelfLife / 365);
-            const months = Math.floor((shelfLife % 365) / 30);
-            const days = shelfLife % 30;
-            
-            let readableTime = '';
-            if (years > 0) readableTime += years + ' year' + (years > 1 ? 's' : '');
-            if (months > 0) {
-                if (readableTime) readableTime += ', ';
-                readableTime += months + ' month' + (months > 1 ? 's' : '');
-            }
-            if (days > 0 && !years) {
-                if (readableTime) readableTime += ', ';
-                readableTime += days + ' day' + (days > 1 ? 's' : '');
-            }
-            
-            if (readableTime) {
-                hint.textContent = 'Approximately ' + readableTime + ' shelf life';
-            }
+(function () {
+    'use strict';
+
+    let codeReader    = null;
+    let currentDeviceId = null;
+    let facingMode    = 'environment';
+    let isScanning    = false;
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function showSuccess(message) {
+        const el = document.getElementById('scanner-result');
+        el.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg> ${message}`;
+        el.style.display = 'flex';
+        document.getElementById('scanner-error').style.display = 'none';
+    }
+
+    function showError(message) {
+        const el = document.getElementById('scanner-error');
+        el.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg> ${message}`;
+        el.style.display = 'flex';
+        document.getElementById('scanner-result').style.display = 'none';
+    }
+
+    // ── Camera ───────────────────────────────────────────────────────────────
+
+    function initReader() {
+        if (typeof ZXing === 'undefined') {
+            showError('Barcode scanner library failed to load. Please refresh the page.');
+            return false;
         }
+        if (!codeReader) {
+            codeReader = new ZXing.BrowserMultiFormatReader();
+        }
+        return true;
+    }
+
+    async function getDeviceId() {
+        const constraints = { video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        stream.getTracks().forEach(t => t.stop());
+
+        const devices    = await navigator.mediaDevices.enumerateDevices();
+        const videoDevs  = devices.filter(d => d.kind === 'videoinput');
+        if (!videoDevs.length) throw new Error('No video input devices found');
+
+        // Prefer the matching facing-mode camera
+        for (const dev of videoDevs) {
+            try {
+                const caps = dev.getCapabilities ? dev.getCapabilities() : {};
+                if (caps.facingMode && caps.facingMode.includes(facingMode)) return dev.deviceId;
+            } catch (_) {}
+        }
+
+        // Fallback: back camera tends to be the last in the list
+        return (facingMode === 'environment' && videoDevs.length > 1)
+            ? videoDevs[videoDevs.length - 1].deviceId
+            : videoDevs[0].deviceId;
+    }
+
+    function setCameraButtons(running) {
+        document.getElementById('start-scan').style.display    = running ? 'none'        : 'inline-block';
+        document.getElementById('stop-scan').style.display     = running ? 'inline-block' : 'none';
+        document.getElementById('switch-camera').style.display = running ? 'inline-block' : 'none';
+    }
+
+    function stopCamera() {
+        isScanning = false;
+        if (codeReader) codeReader.reset();
+
+        const video = document.getElementById('camera-feed');
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(t => t.stop());
+            video.srcObject = null;
+        }
+        video.pause();
+        video.load();
+
+        document.getElementById('scan-result').style.display = 'none';
+        setCameraButtons(false);
+    }
+
+    function startScanning() {
+        if (!codeReader || isScanning) return;
+        isScanning = true;
+
+        const scanEl = document.getElementById('scan-result');
+        scanEl.style.display = 'flex';
+        scanEl.className     = 'scan-status';
+        scanEl.innerHTML     = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg> Scanning...`;
+
+        const video = document.getElementById('camera-feed');
+        video.pause();
+
+        codeReader.decodeFromVideoDevice(
+            currentDeviceId,
+            video,
+            (result, err) => {
+                if (result) {
+                    isScanning = false;
+                    scanEl.innerHTML  = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg> Barcode Detected!`;
+                    scanEl.className  = 'scan-status success';
+
+                    if ('vibrate' in navigator) navigator.vibrate(200);
+                    codeReader.reset();
+                    video.pause();
+                    lookupBarcode(result.text);
+                }
+                if (err && !(err instanceof ZXing.NotFoundException)) {
+                    console.error('Scan error:', err);
+                }
+            },
+            { constraints: { video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } } } }
+        ).catch(err => {
+            console.error('decodeFromVideoDevice failed:', err);
+            isScanning = false;
+            stopCamera();
+            const msgs = {
+                NotAllowedError:      'Camera access denied. Please enable camera permissions in your browser settings.',
+                NotFoundError:        'No camera found. Please connect a camera or use manual entry below.',
+                NotReadableError:     'Camera is already in use by another application.',
+                OverconstrainedError: 'Unable to use the requested camera. Try switching cameras or use manual entry.',
+            };
+            showError(msgs[err.name] || 'Failed to start camera. Please use manual entry below.');
+        });
+    }
+
+    async function startCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            showError('Camera API not supported in this browser.');
+            return;
+        }
+        if (!initReader()) return;
+
+        try {
+            currentDeviceId = await getDeviceId();
+        } catch (err) {
+            console.error('getDeviceId error:', err);
+            const msgs = {
+                NotAllowedError: 'Camera access denied. Please enable camera permissions.',
+                NotFoundError:   'No camera found. Use manual entry below.',
+            };
+            showError(msgs[err.name] || 'Unable to access camera. Please check permissions.');
+            return;
+        }
+
+        setCameraButtons(true);
+        startScanning();
+    }
+
+    async function switchCamera() {
+        stopCamera();
+        facingMode = facingMode === 'environment' ? 'user' : 'environment';
+        setTimeout(async () => {
+            try {
+                currentDeviceId = await getDeviceId();
+                setCameraButtons(true);
+                startScanning();
+            } catch (err) {
+                console.error('switchCamera error:', err);
+                showError('Failed to switch camera. The requested camera may not be available.');
+                setCameraButtons(false);
+            }
+        }, 150);
+    }
+
+    // ── Barcode lookup ────────────────────────────────────────────────────────
+
+    function lookupBarcode(barcode) {
+        fetch('barcode_scanner_prod_catalog.php', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body:    'barcode=' + encodeURIComponent(barcode)
+        })
+        .then(r => r.json())
+        .then(data => {
+            stopCamera();
+            if (data.success && data.exists) {
+                displayExistingProduct(data.product, barcode);
+                showSuccess('Product already exists in catalog (Barcode: ' + barcode + ')');
+            } else {
+                displayNewProductForm(barcode);
+                showError('Product not found. Please fill in the details and add it to the catalog.');
+            }
+        })
+        .catch(err => {
+            showError('Error looking up product. Please try again.');
+            console.error(err);
+        });
+    }
+
+    // ── Result display ────────────────────────────────────────────────────────
+
+    function displayExistingProduct(product, barcode) {
+        document.getElementById('result-title').textContent = 'Product Already in Catalog';
+        document.getElementById('result-icon').innerHTML    = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>`;
+
+        document.getElementById('product-name').textContent       = product.product_name       || '—';
+        document.getElementById('product-brand').textContent      = product.brand              || 'N/A';
+        document.getElementById('product-category').textContent   = product.category_name      || 'N/A';
+        document.getElementById('product-unit').textContent       = product.default_unit       || '—';
+        document.getElementById('product-shelf-life').textContent = product.typical_shelf_life_days
+            ? product.typical_shelf_life_days + ' days' : 'N/A';
+        document.getElementById('product-barcode').textContent    = barcode;
+
+        document.getElementById('existing-product-details').style.display = 'block';
+        document.getElementById('add-product-form').style.display         = 'none';
+        document.getElementById('add-to-catalog').style.display           = 'none';
+        document.getElementById('product-result').style.display           = 'block';
+        document.getElementById('product-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function displayNewProductForm(barcode) {
+        document.getElementById('result-title').textContent = 'Add New Product to Catalog';
+        document.getElementById('result-icon').innerHTML    = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>`;
+
+        // Pre-fill barcode; clear everything else
+        document.getElementById('new-barcode').value       = barcode;
+        document.getElementById('new-product-name').value = '';
+        document.getElementById('new-brand').value        = '';
+        document.getElementById('new-category').value     = '';
+        document.getElementById('new-unit').value         = 'pcs';
+        document.getElementById('new-shelf-life').value   = '';
+        document.getElementById('new-description').value  = '';
+
+        document.getElementById('existing-product-details').style.display = 'none';
+        document.getElementById('add-product-form').style.display         = 'block';
+        document.getElementById('add-to-catalog').style.display           = 'inline-block';
+        document.getElementById('product-result').style.display           = 'block';
+        document.getElementById('product-result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ── Add to catalog ────────────────────────────────────────────────────────
+
+    document.getElementById('add-to-catalog').addEventListener('click', function () {
+        const btn         = this;
+        const barcode     = document.getElementById('new-barcode').value.trim();
+        const productName = document.getElementById('new-product-name').value.trim();
+
+        if (!barcode) {
+            showError('No barcode found. Please scan or enter a barcode first.');
+            return;
+        }
+        if (!productName) {
+            showError('Please enter a product name.');
+            document.getElementById('new-product-name').focus();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+
+        const body = new URLSearchParams({
+            add_product:  '1',
+            barcode:      barcode,
+            product_name: productName,
+            brand:        document.getElementById('new-brand').value.trim(),
+            category_id:  document.getElementById('new-category').value,
+            default_unit: document.getElementById('new-unit').value,
+            shelf_life:   document.getElementById('new-shelf-life').value,
+            description:  document.getElementById('new-description').value.trim()
+        });
+
+        fetch('barcode_scanner_prod_catalog.php', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body:    body
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('Server returned HTTP ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showSuccess(data.message || 'Product added successfully!');
+                setTimeout(() => {
+                    document.getElementById('product-result').style.display  = 'none';
+                    document.getElementById('scanner-result').style.display  = 'none';
+                    document.getElementById('scanner-error').style.display   = 'none';
+                    startCamera();
+                }, 2000);
+            } else {
+                showError(data.message || 'Unknown error from server.');
+            }
+        })
+        .catch(err => {
+            showError('Error adding product: ' + err.message);
+            console.error(err);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg> Add to Catalog`;
+        });
     });
-    
-    // Preview image URL
-    document.getElementById('image_url').addEventListener('blur', function() {
-        const url = this.value.trim();
-        const existingPreview = document.getElementById('image-preview');
-        
-        if (existingPreview) {
-            existingPreview.remove();
-        }
-        
-        if (url && url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-            const preview = document.createElement('div');
-            preview.id = 'image-preview';
-            preview.style.cssText = 'margin-top: 10px; padding: 10px; background: #fafafa; border: 1px solid rgba(0,0,0,0.08); text-align: center;';
-            preview.innerHTML = `
-                <img src="${url}" alt="Product preview" 
-                     style="max-width: 200px; max-height: 200px; object-fit: contain; border: 1px solid rgba(0,0,0,0.1);"
-                     onerror="this.parentElement.innerHTML='<small style=color:rgba(0,0,0,0.5)>Failed to load image</small>'">
-            `;
-            this.parentElement.parentElement.appendChild(preview);
-        }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+
+    document.getElementById('start-scan').addEventListener('click', startCamera);
+    document.getElementById('stop-scan').addEventListener('click', stopCamera);
+    document.getElementById('switch-camera').addEventListener('click', switchCamera);
+
+    document.getElementById('manual-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const barcode = document.getElementById('manual-barcode').value.trim();
+        if (barcode) lookupBarcode(barcode);
     });
+
+    document.getElementById('scan-another').addEventListener('click', function () {
+        document.getElementById('product-result').style.display  = 'none';
+        document.getElementById('scanner-result').style.display  = 'none';
+        document.getElementById('scanner-error').style.display   = 'none';
+        startCamera();
+    });
+
+    window.addEventListener('beforeunload', stopCamera);
+
+})();
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

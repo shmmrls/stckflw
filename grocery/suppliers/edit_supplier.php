@@ -1,12 +1,6 @@
 <?php
 require_once __DIR__ . '/../../includes/config.php';
-requireLogin();
-
-// Verify user is grocery admin
-if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/customer/dashboard.php');
-    exit();
-}
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 
 $conn = getDBConnection();
 

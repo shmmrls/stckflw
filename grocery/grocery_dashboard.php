@@ -1,12 +1,6 @@
 <?php
+require_once __DIR__ . '/../includes/admin_auth_check.php';
 require_once __DIR__ . '/../includes/config.php';
-requireLogin();
-
-// Verify user is grocery admin
-if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/customer/dashboard.php');
-    exit();
-}
 
 $conn = getDBConnection();
 $user_id = getCurrentUserId();
@@ -66,9 +60,9 @@ $alerts_stmt = $conn->prepare("
         gi.expiry_date,
         gi.expiry_status,
         CASE 
-            WHEN gi.quantity <= gi.reorder_level THEN 'LOW_STOCK'
             WHEN gi.expiry_status = 'expired' THEN 'EXPIRED'
             WHEN gi.expiry_status = 'near_expiry' THEN 'NEAR_EXPIRY'
+            WHEN gi.quantity <= gi.reorder_level THEN 'LOW_STOCK'
             ELSE 'OK'
         END as alert_type,
         DATEDIFF(gi.expiry_date, CURDATE()) as days_until_expiry
@@ -205,20 +199,21 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="action-label">View Inventory</div>
                 </a>
 
-                <a href="<?= htmlspecialchars($baseUrl) ?>/grocery/items/alerts.php" class="action-card">
-                    <div class="action-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                    </div>
-                    <div class="action-label">Alerts</div>
-                </a>
-                <a href="<?= htmlspecialchars($baseUrl) ?>/grocery/suppliers/view_suppliers.php" class="action-card">
+                                <a href="<?= htmlspecialchars($baseUrl) ?>/grocery/suppliers/view_suppliers.php" class="action-card">
                     <div class="action-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
                         </svg></div>
                     <div class="action-label">Suppliers</div>
+                </a>
+
+                <a href="purchase_orders/index.php" class="action-card">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Purchase Orders</div>
                 </a>
 
                 <a href="reports/reports.php" class="action-card">
@@ -250,7 +245,6 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="content-section">
             <div class="section-header">
                 <h2 class="section-title">Inventory Alerts</h2>
-                <a href="<?= htmlspecialchars($baseUrl) ?>/grocery/items/alerts.php" class="section-link">View All →</a>
             </div>
 
             <div class="table-wrapper">
@@ -262,7 +256,6 @@ require_once __DIR__ . '/../includes/header.php';
                             <th>Quantity</th>
                             <th>Expiry Date</th>
                             <th>Days Until Expiry</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -305,9 +298,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 }
                                 ?>
                             </td>
-                            <td>
-                                <a href="<?= htmlspecialchars($baseUrl) ?>/grocery/items/edit_item.php?id=<?php echo $alert['item_id']; ?>" class="action-btn">Manage</a>
-                            </td>
                         </tr>
                         <?php endwhile; ?>
                     </tbody>
@@ -336,7 +326,6 @@ require_once __DIR__ . '/../includes/header.php';
                                 <th>Selling Price</th>
                                 <th>Expiry Date</th>
                                 <th>Status</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -363,9 +352,6 @@ require_once __DIR__ . '/../includes/header.php';
                                     <span class="badge <?php echo $badge_class; ?>">
                                         <?php echo ucfirst(str_replace('_', ' ', $item['expiry_status'])); ?>
                                     </span>
-                                </td>
-                                <td>
-                                    <a href="<?= htmlspecialchars($baseUrl) ?>/grocery/items/edit_item.php?id=<?php echo $item['item_id']; ?>" class="action-btn">Edit</a>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

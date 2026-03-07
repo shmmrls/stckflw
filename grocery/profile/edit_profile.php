@@ -1,22 +1,10 @@
 <?php
 ob_start();
-session_start();
 require_once __DIR__ . '/../../includes/config.php';
+require_once __DIR__ . '/../../includes/admin_auth_check.php';
 
 // Initialize database connection
 $conn = getDBConnection();
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../auth/login.php");
-    exit;
-}
-
-// Verify user is grocery admin
-if ($_SESSION['role'] !== 'grocery_admin') {
-    header('Location: ' . $baseUrl . '/user/customer/dashboard.php');
-    exit();
-}
 
 $user_id = (int) $_SESSION['user_id'];
 $error = '';

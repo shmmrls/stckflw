@@ -1,9 +1,18 @@
 <?php
 require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/customer_auth_check.php';
 requireLogin();
 
 $conn = getDBConnection();
 $user_id = getCurrentUserId();
+
+// Initialize notification system
+require_once __DIR__ . '/../includes/notifications_system.php';
+require_once __DIR__ . '/../includes/expiry_alerts.php';
+ensureNotificationsTable($conn);
+
+// Run notification checks
+runNotificationChecks($conn, $user_id);
 
 // Get user points
 $points_stmt = $conn->prepare("SELECT total_points FROM user_points WHERE user_id = ?");
@@ -197,16 +206,27 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="action-label">My Groups</div>
                 </a>
 
-                <a href="categories.php" class="action-card">
+                <a href="meal_suggestions.php" class="action-card">
                     <div class="action-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                            <path d="M7 2v20"/>
+                            <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
                         </svg>
                     </div>
-                    <div class="action-label">Categories</div>
+                    <div class="action-label">Meal Ideas</div>
                 </a>
 
-                <a href="reports.php" class="action-card">
+                <a href="shopping_list.php" class="action-card">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 2v2m6-2v2M4 8h16M4 8v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M4 8l1-4h14l1 4"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Shopping List</div>
+                </a>
+
+                <a href="reports/reports.php" class="action-card">
                     <div class="action-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
@@ -240,15 +260,6 @@ require_once __DIR__ . '/../includes/header.php';
                         </svg>
                     </div>
                     <div class="action-label">Waste Tracking</div>
-                </a>
-
-                <a href="analytics.php" class="action-card">
-                    <div class="action-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-                        </svg>
-                    </div>
-                    <div class="action-label">Analytics</div>
                 </a>
             </div>
         </div>
@@ -404,7 +415,7 @@ require_once __DIR__ . '/../includes/header.php';
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="consume_item.php?id=<?php echo $item['item_id']; ?>" class="action-btn">Consume</a>
+                                    <a href="customer/item/consume_item.php?id=<?php echo $item['item_id']; ?>" class="action-btn">Consume</a>
                                 </td>
                             </tr>
                             <?php endwhile; ?>

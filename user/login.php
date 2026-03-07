@@ -211,8 +211,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $conn->begin_transaction();
                         
                         try {
-                            $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, role, is_active, img_name, store_id) VALUES (?, ?, ?, 'customer', 1, ?, NULL)");
-                            $stmt->bind_param("sssss", $name, $email, $hashed_password, $img_name, NULL);
+                            $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, role, is_active, img_name, store_id) VALUES (?, ?, ?, 'customer', 1, ?, ?)");
+                            $store_id = NULL;
+                            $stmt->bind_param("sssss", $name, $email, $hashed_password, $img_name, $store_id);
                             
                             if ($stmt->execute()) {
                                 $new_user_id = $conn->insert_id;
@@ -290,7 +291,7 @@ $conn->close();
 if (!isset($baseUrl)) {
     $baseUrl = '/StockFlowExp';
 }
-$pageCss = '<link rel="stylesheet" href="<?= htmlspecialchars($baseUrl) ?>/includes/style/pages/login.css">';
+$pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/login.css">';
 ob_end_flush();
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -347,6 +348,12 @@ require_once __DIR__ . '/../includes/header.php';
                 <button type="submit" name="login" class="luxury-btn luxury-btn-primary">
                     <span>Sign In</span>
                 </button>
+                
+                <div class="auth-footer">
+                    <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                        Grocery Store? <a href="<?php echo htmlspecialchars($baseUrl); ?>/grocery/grocery_login.php" style="color: #000; font-weight: 500;">Sign in here</a>
+                    </p>
+                </div>
             </form>
         </div>
 
@@ -457,12 +464,18 @@ require_once __DIR__ . '/../includes/header.php';
                 <button type="submit" name="register" class="luxury-btn luxury-btn-primary">
                     <span>Create Account</span>
                 </button>
+                
+                <div class="auth-footer">
+                    <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                        Grocery Store? <a href="<?php echo htmlspecialchars($baseUrl); ?>/grocery/grocery_login.php#register" style="color: #000; font-weight: 500;">Register here</a>
+                    </p>
+                </div>
             </form>
         </div>
     </div>
 </section>
 
-<script src="<?= htmlspecialchars($baseUrl) ?>/includes/js/pages/login.js" defer></script>
+<script src="<?php echo htmlspecialchars($baseUrl); ?>/includes/js/pages/login.js" defer></script>
 
 <script>
 // Format invitation code input - only allow numbers
