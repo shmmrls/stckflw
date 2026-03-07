@@ -6,6 +6,10 @@ requireLogin();
 $conn = getDBConnection();
 $user_id = getCurrentUserId();
 
+// Update expired status for items that have passed expiry date
+require_once __DIR__ . '/../../../includes/auto_waste_logging.php';
+updateExpiredStatus($conn);
+
 // Get group ID from URL
 $group_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -36,29 +40,17 @@ $group_stmt = $conn->prepare("
         g.group_type,
         g.invitation_code,
         g.created_at,
+        g.created_by,
         u.full_name as created_by_name,
-        COUNT(DISTINCT gm.user_id) as member_count,
-        COUNT(DISTINCT ci.item_id) as total_items,
-        SUM(CASE 
-            WHEN ci.expiry_date > DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 1 
-            ELSE 0 
-        END) as fresh_items,
-        SUM(CASE 
-            WHEN ci.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) 
-            AND ci.expiry_date >= CURDATE() THEN 1 
-            ELSE 0 
-        END) as near_expiry_items,
-        SUM(CASE 
-            WHEN ci.expiry_date < CURDATE() THEN 1 
-            ELSE 0 
-        END) as expired_items,
-        SUM(ci.quantity) as total_quantity
+        (SELECT COUNT(DISTINCT gm.user_id) FROM group_members gm WHERE gm.group_id = g.group_id) as member_count,
+        (SELECT COUNT(DISTINCT ci.item_id) FROM customer_items ci WHERE ci.group_id = g.group_id) as total_items,
+        (SELECT COUNT(DISTINCT ci.item_id) FROM customer_items ci WHERE ci.group_id = g.group_id AND ci.expiry_status = 'fresh') as fresh_items,
+        (SELECT COUNT(DISTINCT ci.item_id) FROM customer_items ci WHERE ci.group_id = g.group_id AND ci.expiry_status = 'near_expiry') as near_expiry_items,
+        (SELECT COUNT(DISTINCT ci.item_id) FROM customer_items ci WHERE ci.group_id = g.group_id AND ci.expiry_status = 'expired') as expired_items,
+        (SELECT COALESCE(SUM(ci.quantity), 0) FROM customer_items ci WHERE ci.group_id = g.group_id) as total_quantity
     FROM groups g
     LEFT JOIN users u ON g.created_by = u.user_id
-    LEFT JOIN group_members gm ON g.group_id = gm.group_id
-    LEFT JOIN customer_items ci ON g.group_id = ci.group_id
     WHERE g.group_id = ?
-    GROUP BY g.group_id
 ");
 $group_stmt->bind_param("i", $group_id);
 $group_stmt->execute();
@@ -91,29 +83,29 @@ $members_stmt->bind_param("ii", $group_id, $group_id);
 $members_stmt->execute();
 $members = $members_stmt->get_result();
 
-// Get recent items with proper expiry calculation
+// Get recent activities (consumption, additions, etc.) with proper expiry calculation
 $items_stmt = $conn->prepare("
     SELECT 
+        ciu.update_id,
+        ciu.update_type,
+        ciu.quantity_change,
+        ciu.update_date,
+        ciu.notes,
         ci.item_id,
         ci.item_name,
         ci.quantity,
         ci.unit,
         ci.expiry_date,
-        ci.purchase_date,
+        ci.expiry_status,
         ci.date_added,
         c.category_name,
-        u.full_name as added_by_name,
-        CASE 
-            WHEN ci.expiry_date > DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'fresh'
-            WHEN ci.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) 
-                 AND ci.expiry_date >= CURDATE() THEN 'near_expiry'
-            WHEN ci.expiry_date < CURDATE() THEN 'expired'
-        END as expiry_status
-    FROM customer_items ci
+        u.full_name as added_by_name
+    FROM customer_inventory_updates ciu
+    INNER JOIN customer_items ci ON ciu.item_id = ci.item_id
     LEFT JOIN categories c ON ci.category_id = c.category_id
-    LEFT JOIN users u ON ci.created_by = u.user_id
+    LEFT JOIN users u ON ciu.updated_by = u.user_id
     WHERE ci.group_id = ?
-    ORDER BY ci.date_added DESC
+    ORDER BY ciu.update_date DESC
     LIMIT 10
 ");
 $items_stmt->bind_param("i", $group_id);
@@ -144,6 +136,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_member']) && $
             header("Refresh:0");
         } else {
             $error = "Failed to remove member";
+        }
+    }
+}
+
+// Handle leave group
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['leave_group'])) {
+    // Check if user is the creator
+    $creator_check = $conn->prepare("SELECT created_by FROM groups WHERE group_id = ?");
+    $creator_check->bind_param("i", $group_id);
+    $creator_check->execute();
+    $creator_result = $creator_check->get_result()->fetch_assoc();
+    
+    if ($creator_result['created_by'] == $user_id) {
+        $error = "As the group creator, you must delete the group instead of leaving it. This will remove all members and delete the group permanently.";
+    } else {
+        $leave_stmt = $conn->prepare("DELETE FROM group_members WHERE group_id = ? AND user_id = ?");
+        $leave_stmt->bind_param("ii", $group_id, $user_id);
+        
+        if ($leave_stmt->execute()) {
+            $success = "You have left the group successfully";
+            header("Location: my_groups.php");
+            exit;
+        } else {
+            $error = "Failed to leave group";
+        }
+    }
+}
+
+// Handle delete group
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_group'])) {
+    // Check if user is the creator
+    $creator_check = $conn->prepare("SELECT created_by FROM groups WHERE group_id = ?");
+    $creator_check->bind_param("i", $group_id);
+    $creator_check->execute();
+    $creator_result = $creator_check->get_result()->fetch_assoc();
+    
+    if ($creator_result['created_by'] != $user_id) {
+        $error = "Only the group creator can delete the group";
+    } else {
+        // Start transaction
+        $conn->begin_transaction();
+        
+        try {
+            // Delete all group members
+            $delete_members = $conn->prepare("DELETE FROM group_members WHERE group_id = ?");
+            $delete_members->bind_param("i", $group_id);
+            $delete_members->execute();
+            
+            // Delete all customer items in this group
+            $delete_items = $conn->prepare("DELETE FROM customer_items WHERE group_id = ?");
+            $delete_items->bind_param("i", $group_id);
+            $delete_items->execute();
+            
+            // Delete the group
+            $delete_group = $conn->prepare("DELETE FROM groups WHERE group_id = ?");
+            $delete_group->bind_param("i", $group_id);
+            $delete_group->execute();
+            
+            $conn->commit();
+            $success = "Group deleted successfully";
+            header("Location: my_groups.php");
+            exit;
+        } catch (Exception $e) {
+            $conn->rollback();
+            $error = "Failed to delete group: " . $e->getMessage();
         }
     }
 }
@@ -224,6 +281,107 @@ require_once __DIR__ . '/../../../includes/header.php';
             </div>
         </div>
 
+        <!-- Group Actions -->
+        <div class="group-actions">
+            <?php if ($group['created_by'] == $user_id): ?>
+                <!-- Delete Group Button for Creator -->
+                <button type="button" class="btn btn-danger" onclick="openDeleteModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Delete Group
+                </button>
+            <?php else: ?>
+                <!-- Leave Group Button for Members -->
+                <button type="button" class="btn btn-secondary" onclick="openLeaveModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Leave Group
+                </button>
+            <?php endif; ?>
+        </div>
+
+        <!-- Delete Group Modal -->
+        <div id="deleteModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <div class="modal-icon modal-icon-danger">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </div>
+                    <h3 class="modal-title">Delete Group</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message">Are you sure you want to delete this group?</p>
+                    <p class="modal-warning">This will permanently delete the group and remove all members. This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <form method="POST" style="display: inline;">
+                        <input type="hidden" name="delete_group" value="1">
+                        <button type="submit" class="btn btn-danger">Delete Group</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Group Modal -->
+        <div id="leaveModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <div class="modal-icon modal-icon-warning">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                    </div>
+                    <h3 class="modal-title">Leave Group</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message">Are you sure you want to leave this group?</p>
+                    <p class="modal-warning">You will lose access to all items and activities in this group.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeLeaveModal()">Cancel</button>
+                    <form method="POST" style="display: inline;">
+                        <input type="hidden" name="leave_group" value="1">
+                        <button type="submit" class="btn btn-secondary">Leave Group</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Remove Member Modal -->
+        <div id="removeMemberModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <div class="modal-icon modal-icon-warning">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </div>
+                    <h3 class="modal-title">Remove Member</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-message">Are you sure you want to remove <span id="removeMemberName" class="member-name-highlight"></span> from this group?</p>
+                    <p class="modal-warning">They will lose access to all items and activities in this group. They can rejoin using the invitation code if needed.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeRemoveMemberModal()">Cancel</button>
+                    <form id="removeMemberForm" method="POST" style="display: inline;">
+                        <input type="hidden" name="remove_member" value="1">
+                        <input type="hidden" id="removeMemberId" name="member_id" value="">
+                        <button type="submit" class="btn btn-danger">Remove Member</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Statistics Grid -->
         <div class="stats-grid">
             <div class="stat-card stat-primary">
@@ -286,17 +444,6 @@ require_once __DIR__ . '/../../../includes/header.php';
                 </div>
             </div>
 
-            <div class="stat-card stat-secondary">
-                <div class="stat-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value"><?php echo number_format($group['total_quantity'] ?? 0, 0); ?></div>
-                    <div class="stat-label">Total Quantity</div>
-                </div>
-            </div>
         </div>
 
         <!-- Main Content Grid -->
@@ -342,16 +489,12 @@ require_once __DIR__ . '/../../../includes/header.php';
                         </div>
                         <?php if ($is_admin && $member['user_id'] != $user_id): ?>
                         <div class="member-actions">
-                            <form method="POST" onsubmit="return confirm('Are you sure you want to remove this member?');">
-                                <input type="hidden" name="remove_member" value="1">
-                                <input type="hidden" name="member_id" value="<?php echo $member['member_id']; ?>">
-                                <button type="submit" class="btn-remove">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                    </svg>
-                                    Remove
-                                </button>
-                            </form>
+                            <button type="button" class="btn-remove" onclick="openRemoveMemberModal(<?php echo $member['member_id']; ?>, '<?php echo htmlspecialchars($member['full_name']); ?>')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                                Remove
+                            </button>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -389,49 +532,88 @@ require_once __DIR__ . '/../../../includes/header.php';
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                         </svg>
-                        <p>No items added yet. Start tracking your inventory!</p>
+                        <p>No activity yet. Start adding or consuming items!</p>
                     </div>
                 <?php else: ?>
                     <div class="items-list">
-                        <?php while ($item = $recent_items->fetch_assoc()): 
-                            // Calculate expiry status based on development plan
-                            $expiry_date = strtotime($item['expiry_date']);
-                            $today = strtotime(date('Y-m-d'));
-                            $days_until = floor(($expiry_date - $today) / 86400);
+                        <?php while ($activity = $recent_items->fetch_assoc()): 
+                            // Determine action icon and label
+                            $action_icon = '';
+                            $action_label = '';
+                            $action_class = '';
                             
-                            // Determine status icon and label
-                            if ($days_until < 0) {
-                                $status_icon = '🔴';
+                            switch ($activity['update_type']) {
+                                case 'added':
+                                    $action_icon = '➕';
+                                    $action_label = 'Added';
+                                    $action_class = 'added';
+                                    break;
+                                case 'consumed':
+                                    $action_icon = '✅';
+                                    $action_label = 'Consumed';
+                                    $action_class = 'consumed';
+                                    break;
+                                case 'spoiled':
+                                    $action_icon = '🗑️';
+                                    $action_label = 'Spoiled';
+                                    $action_class = 'wasted';
+                                    break;
+                                case 'expired':
+                                    $action_icon = '⏰';
+                                    $action_label = 'Expired';
+                                    $action_class = 'wasted';
+                                    break;
+                            }
+                            
+                            // Determine status icon and label based on database expiry_status
+                            $status_icon = '🟢';
+                            $status_label = 'Fresh';
+                            $status_class = 'fresh';
+                            
+                            if ($activity['expiry_status'] === 'near_expiry') {
+                                $status_icon = '🟡';
+                                $status_label = 'Expires Soon';
+                                $status_class = 'near_expiry';
+                            } elseif ($activity['expiry_status'] === 'expired') {
+                                $status_icon = '�';
                                 $status_label = 'Expired';
                                 $status_class = 'expired';
-                            } elseif ($days_until <= 7) {
-                                $status_icon = '🟡';
-                                $status_label = $days_until == 0 ? 'Expires today' : ($days_until == 1 ? 'Expires tomorrow' : $days_until . ' days left');
-                                $status_class = 'near_expiry';
-                            } else {
-                                $status_icon = '🟢';
-                                $status_label = 'Fresh (' . $days_until . ' days)';
-                                $status_class = 'fresh';
                             }
                         ?>
-                        <div class="item-row">
+                        <div class="item-row activity-<?php echo $action_class; ?>">
                             <div class="item-info">
-                                <div class="item-name"><?php echo htmlspecialchars($item['item_name']); ?></div>
-                                <div class="item-meta">
-                                    <span class="item-category"><?php echo htmlspecialchars($item['category_name']); ?></span>
-                                    <span class="item-separator">•</span>
-                                    <span class="item-added-by">Added by <?php echo htmlspecialchars($item['added_by_name']); ?></span>
-                                    <span class="item-separator">•</span>
-                                    <span class="item-date"><?php echo date('M d, Y', strtotime($item['date_added'])); ?></span>
+                                <div class="item-name">
+                                    <?php echo $action_icon . ' ' . htmlspecialchars($activity['item_name']); ?>
+                                    <span class="action-badge action-<?php echo $action_class; ?>"><?php echo $action_label; ?></span>
                                 </div>
+                                <div class="item-meta">
+                                    <span class="item-category"><?php echo htmlspecialchars($activity['category_name']); ?></span>
+                                    <span class="item-separator">•</span>
+                                    <span class="item-added-by">by <?php echo htmlspecialchars($activity['added_by_name']); ?></span>
+                                    <span class="item-separator">•</span>
+                                    <span class="item-date"><?php echo date('M d, Y H:i', strtotime($activity['update_date'])); ?></span>
+                                </div>
+                                <?php if (!empty($activity['notes'])): ?>
+                                    <div class="item-notes"><?php echo htmlspecialchars($activity['notes']); ?></div>
+                                <?php endif; ?>
                             </div>
                             <div class="item-details">
-                                <div class="item-quantity"><?php echo $item['quantity'] . ' ' . $item['unit']; ?></div>
+                                <div class="item-quantity">
+                                    <?php 
+                                    if ($activity['update_type'] === 'consumed' || $activity['update_type'] === 'spoiled' || $activity['update_type'] === 'expired') {
+                                        echo '-' . $activity['quantity_change'] . ' ' . $activity['unit'];
+                                    } else {
+                                        echo $activity['quantity'] . ' ' . $activity['unit'];
+                                    }
+                                    ?>
+                                </div>
+                                <?php if ($activity['update_type'] === 'added'): ?>
                                 <div class="item-expiry">
                                     <span class="expiry-badge expiry-<?php echo $status_class; ?>">
                                         <?php echo $status_icon . ' ' . $status_label; ?>
                                     </span>
                                 </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <?php endwhile; ?>
@@ -460,6 +642,49 @@ function copyInvitationCode(code) {
         }, 2000);
     });
 }
+
+// Modal functions
+function openDeleteModal() {
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+}
+
+function openLeaveModal() {
+    document.getElementById('leaveModal').classList.add('active');
+}
+
+function closeLeaveModal() {
+    document.getElementById('leaveModal').classList.remove('active');
+}
+
+function openRemoveMemberModal(memberId, memberName) {
+    document.getElementById('removeMemberId').value = memberId;
+    document.getElementById('removeMemberName').textContent = memberName;
+    document.getElementById('removeMemberModal').classList.add('active');
+}
+
+function closeRemoveMemberModal() {
+    document.getElementById('removeMemberModal').classList.remove('active');
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+        event.target.classList.remove('active');
+    }
+});
+
+// Close modals with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+            modal.classList.remove('active');
+        });
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/../../../includes/footer.php'; ?>

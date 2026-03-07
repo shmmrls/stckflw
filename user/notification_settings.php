@@ -4,7 +4,16 @@
  * Route: /user/notification_settings.php
  */
 
+// TEST: Always log when this file is accessed
+// error_log("FILE ACCESSED: " . __FILE__ . " at " . date('Y-m-d H:i:s') . " REQUEST_METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown'));
+
 session_start();
+
+// Prevent browser caching
+header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+
 require_once '../includes/config.php';
 require_once '../includes/customer_auth_check.php';
 require_once '../includes/notifications_system.php';
@@ -58,14 +67,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit;
 
         case 'save_preferences':
-            $ok = saveNotificationPreferences($conn, $user_id, [
-                'expiry_enabled'      => isset($_POST['expiry_enabled'])      ? 1 : 0,
+            $save_data = [
+                'expiry_enabled'      => ($_POST['expiry_enabled'] ?? '0') === '1' ? '1' : '0',
                 'expiry_days_before'  => max(1, min(30, (int) ($_POST['expiry_days_before'] ?? 7))),
-                'low_stock_enabled'   => isset($_POST['low_stock_enabled'])   ? 1 : 0,
-                'achievement_enabled' => isset($_POST['achievement_enabled']) ? 1 : 0,
-                'system_enabled'      => isset($_POST['system_enabled'])      ? 1 : 0,
-                'email_enabled'       => isset($_POST['email_enabled'])       ? 1 : 0,
-            ]);
+                'low_stock_enabled'   => ($_POST['low_stock_enabled'] ?? '0') === '1' ? '1' : '0',
+                'achievement_enabled' => ($_POST['achievement_enabled'] ?? '0') === '1' ? '1' : '0',
+                'system_enabled'      => ($_POST['system_enabled'] ?? '0') === '1' ? '1' : '0',
+                'group_notifications_enabled' => ($_POST['group_notifications_enabled'] ?? '0') === '1' ? '1' : '0',
+                'email_enabled'       => ($_POST['email_enabled'] ?? '0') === '1' ? '1' : '0',
+            ];
+            
+            $ok = saveNotificationPreferences($conn, $user_id, $save_data);
             echo json_encode(['success' => $ok]);
             exit;
     }
@@ -75,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 runNotificationChecks($conn, $user_id);
 
 $prefs          = getNotificationPreferences($conn, $user_id);
+
 $notifications  = getNotifications($conn, $user_id, false, 50);
 $unread_count   = countUnreadNotifications($conn, $user_id);
 $expiry_summary = getExpirySummary($conn, $user_id, $role);
@@ -460,10 +473,10 @@ function timeAgo(string $ts): string {
                                     <div class="toggle-label">Personal Expiry Reminders</div>
                                     <div class="toggle-desc">Your items expiring soon or expired</div>
                                 </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" name="expiry_enabled" value="1" <?= $prefs['expiry_enabled'] ? 'checked' : '' ?>>
-                                    <span class="toggle-slider"></span>
-                                </label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="expiry_enabled" name="expiry_enabled" value="1" <?= $prefs['expiry_enabled'] ? 'checked' : '' ?>>
+                                    <label for="expiry_enabled" class="toggle-slider"></label>
+                                </div>
                             </div>
 
                             <div class="toggle-row">
@@ -471,10 +484,10 @@ function timeAgo(string $ts): string {
                                     <div class="toggle-label">Low Stock Alerts</div>
                                     <div class="toggle-desc">Items running low in your inventory</div>
                                 </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" name="low_stock_enabled" value="1" <?= $prefs['low_stock_enabled'] ? 'checked' : '' ?>>
-                                    <span class="toggle-slider"></span>
-                                </label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="low_stock_enabled" name="low_stock_enabled" value="1" <?= $prefs['low_stock_enabled'] ? 'checked' : '' ?>>
+                                    <label for="low_stock_enabled" class="toggle-slider"></label>
+                                </div>
                             </div>
 
                             <div class="toggle-row">
@@ -482,10 +495,21 @@ function timeAgo(string $ts): string {
                                     <div class="toggle-label">Group Notifications</div>
                                     <div class="toggle-desc">Group invites &amp; shared item updates</div>
                                 </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" name="system_enabled" value="1" <?= $prefs['system_enabled'] ? 'checked' : '' ?>>
-                                    <span class="toggle-slider"></span>
-                                </label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="group_notifications_enabled" name="group_notifications_enabled" value="1" <?= $prefs['group_notifications_enabled'] ? 'checked' : '' ?>>
+                                    <label for="group_notifications_enabled" class="toggle-slider"></label>
+                                </div>
+                            </div>
+
+                            <div class="toggle-row">
+                                <div>
+                                    <div class="toggle-label">System Notifications</div>
+                                    <div class="toggle-desc">Welcome messages &amp; system updates</div>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="system_enabled" name="system_enabled" value="1" <?= $prefs['system_enabled'] ? 'checked' : '' ?>>
+                                    <label for="system_enabled" class="toggle-slider"></label>
+                                </div>
                             </div>
 
                             <div class="toggle-row">
@@ -493,10 +517,10 @@ function timeAgo(string $ts): string {
                                     <div class="toggle-label">Achievement Alerts</div>
                                     <div class="toggle-desc">Badges, points &amp; milestones</div>
                                 </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" name="achievement_enabled" value="1" <?= $prefs['achievement_enabled'] ? 'checked' : '' ?>>
-                                    <span class="toggle-slider"></span>
-                                </label>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="achievement_enabled" name="achievement_enabled" value="1" <?= $prefs['achievement_enabled'] ? 'checked' : '' ?>>
+                                    <label for="achievement_enabled" class="toggle-slider"></label>
+                                </div>
                             </div>
                         </div>
 
@@ -546,8 +570,20 @@ function showToast(message, type = 'success') {
 async function apiPost(data) {
     const fd = new FormData();
     Object.entries(data).forEach(([k, v]) => fd.append(k, v));
+    
+    console.log('=== DEBUG: API REQUEST ===');
+    console.log('URL:', window.location.pathname);
+    console.log('Method: POST');
+    console.log('Data:', data);
+    
     const res = await fetch(window.location.pathname, { method: 'POST', body: fd });
-    return res.json();
+    console.log('Response status:', res.status);
+    console.log('Response ok:', res.ok);
+    
+    const result = await res.json();
+    console.log('Response JSON:', result);
+    
+    return result;
 }
 
 document.querySelectorAll('.btn-mark-read').forEach(btn => {
@@ -613,12 +649,29 @@ document.getElementById('prefsForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd   = new FormData(e.target);
     const body = { action: 'save_preferences' };
-    fd.forEach((v, k) => body[k] = v);
-    ['expiry_enabled','low_stock_enabled','achievement_enabled','system_enabled','email_enabled'].forEach(name => {
-        if (!(name in body)) body[name] = '0';
+    
+    const checkboxNames = ['expiry_enabled','low_stock_enabled','achievement_enabled','system_enabled','group_notifications_enabled','email_enabled'];
+    
+    checkboxNames.forEach(name => {
+        const checkbox = document.querySelector(`input[name="${name}"]`);
+        if (checkbox) {
+            body[name] = checkbox.checked ? '1' : '0';
+        }
     });
+    
+    fd.forEach((v, k) => {
+        if (!checkboxNames.includes(k)) {
+            body[k] = v;
+        }
+    });
+    
     const data = await apiPost(body);
-    showToast(data.success ? 'Preferences saved' : 'Failed to save preferences', data.success ? 'success' : 'error');
+    
+    if (data.success) {
+        showToast('Preferences saved! Refresh page to see changes.', 'success');
+    } else {
+        showToast('Failed to save preferences', 'error');
+    }
 });
 </script>
 

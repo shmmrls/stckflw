@@ -29,15 +29,15 @@ $error   = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $consume_quantity = $_POST['consume_quantity'];
-    $notes            = trim($_POST['notes']);
+    $spoil_quantity = $_POST['spoil_quantity'];
+    $notes           = trim($_POST['notes']);
 
-    if ($consume_quantity <= 0) {
+    if ($spoil_quantity <= 0) {
         $error = "Quantity must be greater than 0";
-    } elseif ($consume_quantity > $item['quantity']) {
-        $error = "Cannot consume more than available quantity";
+    } elseif ($spoil_quantity > $item['quantity']) {
+        $error = "Cannot spoil more than available quantity";
     } else {
-        $new_quantity = $item['quantity'] - $consume_quantity;
+        $new_quantity = $item['quantity'] - $spoil_quantity;
 
         $update_stmt = $conn->prepare("UPDATE customer_items SET quantity = ? WHERE item_id = ?");
         $update_stmt->bind_param("di", $new_quantity, $item_id);
@@ -46,22 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $log_stmt = $conn->prepare("
             INSERT INTO customer_inventory_updates
             (item_id, update_type, quantity_change, updated_by, notes)
-            VALUES (?, 'consumed', ?, ?, ?)
+            VALUES (?, 'spoiled', ?, ?, ?)
         ");
-        $log_stmt->bind_param("idis", $item_id, $consume_quantity, $user_id, $notes);
+        $log_stmt->bind_param("idis", $item_id, $spoil_quantity, $user_id, $notes);
         $log_stmt->execute();
 
+        // Give 1 point for spoiled item (less than consume)
         $points_stmt = $conn->prepare("
             INSERT INTO user_points (user_id, total_points)
-            VALUES (?, 3)
-            ON DUPLICATE KEY UPDATE total_points = total_points + 3
+            VALUES (?, 1)
+            ON DUPLICATE KEY UPDATE total_points = total_points + 1
         ");
         $points_stmt->bind_param("i", $user_id);
         $points_stmt->execute();
 
         $points_log_stmt = $conn->prepare("
             INSERT INTO points_log (user_id, action_type, points_earned, item_id)
-            VALUES (?, 'CONSUME_ITEM', 3, ?)
+            VALUES (?, 'SPOIL_ITEM', 1, ?)
         ");
         $points_log_stmt->bind_param("ii", $user_id, $item_id);
         $points_log_stmt->execute();
@@ -74,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $newly_unlocked = checkAndAwardBadges($conn, $user_id);
 
-        $success = "Item consumed successfully! You earned 3 points!";
+        $success = "Item marked as spoiled! You earned 1 point for tracking waste.";
         if (!empty($newly_unlocked)) {
             $success .= " 🎉 Badge unlocked: " . implode(", ", $newly_unlocked);
         }
@@ -94,8 +95,8 @@ require_once __DIR__ . '/../../../includes/header.php';
 
         <!-- Page Header -->
         <div class="consume-header">
-            <h2>Consume Item</h2>
-            <p>Record usage and earn points for reducing waste</p>
+            <h2>Mark Item as Spoiled</h2>
+            <p>Track waste and earn points for monitoring your inventory</p>
         </div>
 
         <?php if ($error): ?>
@@ -175,21 +176,20 @@ require_once __DIR__ . '/../../../includes/header.php';
 
             <!-- Form Card -->
             <div class="form-card">
-                <p class="form-card-title">Consumption Details</p>
+                <p class="form-card-title">Spoilage Details</p>
 
                 <form method="POST" action="">
                     <div class="form-group">
-                        <label class="form-label" for="consume_quantity">
+                        <label class="form-label" for="spoil_quantity">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <line x1="12" y1="1" x2="12" y2="23"/>
-                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                             </svg>
-                            Quantity to Consume <span style="color:#b91c1c">*</span>
+                            Quantity to Spoil <span style="color:#b91c1c">*</span>
                         </label>
                         <input class="form-input"
                                type="number"
-                               id="consume_quantity"
-                               name="consume_quantity"
+                               id="spoil_quantity"
+                               name="spoil_quantity"
                                step="0.01"
                                min="0.01"
                                max="<?= $item['quantity'] ?>"
@@ -203,23 +203,21 @@ require_once __DIR__ . '/../../../includes/header.php';
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                             </svg>
-                            Notes <span style="color:rgba(0,0,0,.35)">(Optional)</span>
+                            Reason <span style="color:rgba(0,0,0,.35)">(Optional)</span>
                         </label>
                         <textarea class="form-textarea"
                                   id="notes"
                                   name="notes"
                                   rows="3"
-                                  placeholder="e.g., Used for dinner"></textarea>
+                                  placeholder="e.g., Found mold, bad smell, expired early"></textarea>
                     </div>
 
                     <div class="btn-row">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-warning">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="9"  cy="21" r="1"/>
-                                <circle cx="20" cy="21" r="1"/>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                             </svg>
-                            Consume Item (+3 Points)
+                            Mark as Spoiled (+1 Point)
                         </button>
                         <a href="../../dashboard.php" class="btn btn-secondary">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

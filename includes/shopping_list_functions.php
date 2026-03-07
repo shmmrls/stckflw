@@ -227,7 +227,7 @@ function autoGenerateShoppingList($conn, $user_id) {
                 ");
                 
                 $note = "Expiring in " . $item['days_until_expiry'] . " day(s) - replacement";
-                $add->bind_param('isdsii s',
+                $add->bind_param('isdsiis',
                     $user_id,
                     $item['item_name'],
                     $item['quantity'],

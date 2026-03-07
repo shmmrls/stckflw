@@ -104,6 +104,8 @@ function ensureNotificationsTable($conn): void {
 
             `system_enabled`       TINYINT(1)  DEFAULT 1,
 
+            `group_notifications_enabled` TINYINT(1)  DEFAULT 1,
+
             `email_enabled`        TINYINT(1)  DEFAULT 0,
 
             `updated_at`           TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -208,13 +210,39 @@ function getNotifications(
 
 ): array {
 
+    // Get user preferences first
+
+    $prefs = getNotificationPreferences($conn, $user_id);
+
+    // Build enabled types array
+
+    $enabled_types = [];
+
+    if ($prefs['expiry_enabled']) $enabled_types[] = 'expiry';
+
+    if ($prefs['low_stock_enabled']) $enabled_types[] = 'low_stock';
+
+    if ($prefs['achievement_enabled']) $enabled_types[] = 'achievement';
+
+    if ($prefs['system_enabled']) $enabled_types[] = 'system';
+
+    // If no types enabled, return empty array
+
+    if (empty($enabled_types)) {
+
+        return [];
+
+    }
+
+    $types_placeholders = str_repeat('?,', count($enabled_types) - 1) . '?';
+
+    $where_types = "AND type IN ($types_placeholders)";
+
     $where = $unread_only
 
-        ? 'WHERE user_id = ? AND is_read = 0 AND is_dismissed = 0'
+        ? "WHERE user_id = ? AND is_read = 0 AND is_dismissed = 0 $where_types"
 
-        : 'WHERE user_id = ? AND is_dismissed = 0';
-
-
+        : "WHERE user_id = ? AND is_dismissed = 0 $where_types";
 
     $stmt = $conn->prepare("
 
@@ -232,7 +260,13 @@ function getNotifications(
 
     ");
 
-    $stmt->bind_param('iii', $user_id, $limit, $offset);
+    // Merge parameters: user_id + enabled_types + limit + offset
+
+    $params = array_merge([$user_id], $enabled_types, [$limit, $offset]);
+
+    $types = 'i' . str_repeat('s', count($enabled_types)) . 'ii'; // user_id(i), types(s), limit(i), offset(i)
+
+    $stmt->bind_param($types, ...$params);
 
     $stmt->execute();
 
@@ -244,15 +278,33 @@ function getNotifications(
 
 function countUnreadNotifications($conn, int $user_id): int {
 
+    // Get user preferences first
+    $prefs = getNotificationPreferences($conn, $user_id);
+    
+    // Build enabled types array
+    $enabled_types = [];
+    if ($prefs['expiry_enabled']) $enabled_types[] = 'expiry';
+    if ($prefs['low_stock_enabled']) $enabled_types[] = 'low_stock';
+    if ($prefs['achievement_enabled']) $enabled_types[] = 'achievement';
+    if ($prefs['system_enabled']) $enabled_types[] = 'system';
+    
+    // If no types enabled, return 0
+    if (empty($enabled_types)) {
+        return 0;
+    }
+    
+    $types_placeholders = str_repeat('?,', count($enabled_types) - 1) . '?';
+    $where_types = "AND type IN ($types_placeholders)";
+
     $stmt = $conn->prepare("
-
         SELECT COUNT(*) AS cnt FROM notifications
-
-        WHERE user_id = ? AND is_read = 0 AND is_dismissed = 0
-
+        WHERE user_id = ? AND is_read = 0 AND is_dismissed = 0 $where_types
     ");
 
-    $stmt->bind_param('i', $user_id);
+    // Merge parameters: user_id + enabled_types
+    $params = array_merge([$user_id], $enabled_types);
+    $types = 'i' . str_repeat('s', count($enabled_types)); // user_id(i), types(s)
+    $stmt->bind_param($types, ...$params);
 
     $stmt->execute();
 
@@ -354,6 +406,8 @@ function getNotificationPreferences($conn, int $user_id): array {
 
         'system_enabled'      => 1,
 
+        'group_notifications_enabled' => 1,
+
         'email_enabled'       => 0,
 
     ];
@@ -364,17 +418,19 @@ function getNotificationPreferences($conn, int $user_id): array {
 
 function saveNotificationPreferences($conn, int $user_id, array $prefs): bool {
 
-    $expiry_enabled      = (int) ($prefs['expiry_enabled']      ?? 1);
+    $expiry_enabled      = ($prefs['expiry_enabled'] ?? '0') === '1' ? 1 : 0;
 
-    $expiry_days_before  = (int) ($prefs['expiry_days_before']  ?? 7);
+    $expiry_days_before  = (int) ($prefs['expiry_days_before'] ?? 7);
 
-    $low_stock_enabled   = (int) ($prefs['low_stock_enabled']   ?? 1);
+    $low_stock_enabled   = ($prefs['low_stock_enabled'] ?? '0') === '1' ? 1 : 0;
 
-    $achievement_enabled = (int) ($prefs['achievement_enabled'] ?? 1);
+    $achievement_enabled = ($prefs['achievement_enabled'] ?? '0') === '1' ? 1 : 0;
 
-    $system_enabled      = (int) ($prefs['system_enabled']      ?? 1);
+    $system_enabled      = ($prefs['system_enabled'] ?? '0') === '1' ? 1 : 0;
 
-    $email_enabled       = (int) ($prefs['email_enabled']       ?? 0);
+    $group_notifications_enabled = ($prefs['group_notifications_enabled'] ?? '0') === '1' ? 1 : 0;
+
+    $email_enabled       = ($prefs['email_enabled'] ?? '0') === '1' ? 1 : 0;
 
 
 
@@ -384,9 +440,9 @@ function saveNotificationPreferences($conn, int $user_id, array $prefs): bool {
 
             (user_id, expiry_enabled, expiry_days_before, low_stock_enabled,
 
-             achievement_enabled, system_enabled, email_enabled)
+             achievement_enabled, system_enabled, group_notifications_enabled, email_enabled)
 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 
         ON DUPLICATE KEY UPDATE
 
@@ -400,15 +456,17 @@ function saveNotificationPreferences($conn, int $user_id, array $prefs): bool {
 
             system_enabled      = VALUES(system_enabled),
 
+            group_notifications_enabled = VALUES(group_notifications_enabled),
+
             email_enabled       = VALUES(email_enabled)
 
     ");
 
-    $stmt->bind_param('iiiiiii',
+    $stmt->bind_param('iiiiiiii',
 
         $user_id, $expiry_enabled, $expiry_days_before,
 
-        $low_stock_enabled, $achievement_enabled, $system_enabled, $email_enabled
+        $low_stock_enabled, $achievement_enabled, $system_enabled, $group_notifications_enabled, $email_enabled
 
     );
 
@@ -434,7 +492,7 @@ function runNotificationChecks($conn, int $user_id): array {
 
     $prefs   = getNotificationPreferences($conn, $user_id);
 
-    $results = ['expiry' => 0, 'low_stock' => 0, 'achievement' => 0];
+    $results = ['expiry' => 0, 'low_stock' => 0, 'achievement' => 0, 'system' => 0];
 
 
 
@@ -464,9 +522,17 @@ function runNotificationChecks($conn, int $user_id): array {
 
 
 
-    if ($prefs['low_stock_enabled'] && $role === 'grocery_admin') {
+    if ($prefs['low_stock_enabled']) {
 
-        $results['low_stock'] = generateLowStockNotifications($conn, $user_id);
+        if ($role === 'grocery_admin') {
+
+            $results['low_stock'] = generateLowStockNotifications($conn, $user_id);
+
+        } else {
+
+            $results['low_stock'] = generateCustomerLowStockNotifications($conn, $user_id);
+
+        }
 
     }
 
@@ -474,7 +540,27 @@ function runNotificationChecks($conn, int $user_id): array {
 
     if ($prefs['achievement_enabled']) {
 
-        $results['achievement'] = generateAchievementNotifications($conn, $user_id);
+        if ($role === 'grocery_admin') {
+            // For grocery admin, achievement notifications include supplier alerts
+            $results['achievement'] = generateAchievementNotifications($conn, $user_id) + 
+                                    generateSupplierNotifications($conn, $user_id);
+        } else {
+            $results['achievement'] = generateAchievementNotifications($conn, $user_id);
+        }
+
+    }
+
+
+
+    if ($prefs['system_enabled']) {
+
+        if ($role === 'grocery_admin') {
+            // For grocery admin, system notifications include purchase order updates
+            $results['system'] = generateSystemNotifications($conn, $user_id) + 
+                               generatePurchaseOrderNotifications($conn, $user_id);
+        } else {
+            $results['system'] = generateSystemNotifications($conn, $user_id);
+        }
 
     }
 
@@ -485,11 +571,173 @@ function runNotificationChecks($conn, int $user_id): array {
 }
 
 
-
 // ──────────────────────────────────────────────
 
-// Achievement notifications (badges + points)
+// Purchase Order notifications
+// ──────────────────────────────────────────────
 
+function generatePurchaseOrderNotifications($conn, int $user_id): int {
+    $count = 0;
+    
+    // Get the store_id for this grocery admin
+    $store_stmt = $conn->prepare("SELECT store_id FROM users WHERE user_id = ?");
+    $store_stmt->bind_param('i', $user_id);
+    $store_stmt->execute();
+    $store = $store_stmt->get_result()->fetch_assoc();
+    
+    if (!$store) return $count;
+    
+    $store_id = $store['store_id'];
+    
+    // Check for recently created purchase orders (last 24 hours)
+    $recent_pos = $conn->prepare("
+        SELECT po.po_id, po.po_number, po.status, po.created_at,
+               COUNT(poi.po_item_id) as item_count
+        FROM purchase_orders po
+        LEFT JOIN purchase_order_items poi ON po.po_id = poi.po_id
+        WHERE po.store_id = ? 
+          AND po.created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+          AND po.status IN ('submitted', 'confirmed', 'partially_received', 'received')
+        GROUP BY po.po_id
+        ORDER BY po.created_at DESC
+        LIMIT 10
+    ");
+    $recent_pos->bind_param('i', $store_id);
+    $recent_pos->execute();
+    
+    foreach ($recent_pos->get_result()->fetch_all(MYSQLI_ASSOC) as $po) {
+        // Check if we already notified about this PO
+        $notified_check = $conn->prepare("
+            SELECT 1 FROM notifications 
+            WHERE user_id = ? AND type = 'system' 
+              AND reference_id = ? AND reference_type = 'purchase_order'
+            LIMIT 1
+        ");
+        $notified_check->bind_param('ii', $user_id, $po['po_id']);
+        $notified_check->execute();
+        
+        if ($notified_check->get_result()->num_rows === 0) {
+            $status_text = ucfirst($po['status']);
+            $created = createNotification(
+                $conn, $user_id,
+                NOTIF_TYPE_SYSTEM,
+                '📦 Purchase Order ' . $status_text . ': ' . $po['po_number'],
+                'Purchase Order ' . $po['po_number'] . ' is ' . $status_text . 
+                ' with ' . $po['item_count'] . ' items.',
+                NOTIF_PRIORITY_MEDIUM,
+                $po['po_id'],
+                'purchase_order'
+            );
+            if ($created) $count++;
+        }
+    }
+    
+    return $count;
+}
+// ──────────────────────────────────────────────
+// Supplier notifications
+// ──────────────────────────────────────────────
+
+function generateSupplierNotifications($conn, int $user_id): int {
+    $count = 0;
+    
+    // Get the store_id for this grocery admin
+    $store_stmt = $conn->prepare("SELECT store_id FROM users WHERE user_id = ?");
+    $store_stmt->bind_param('i', $user_id);
+    $store_stmt->execute();
+    $store = $store_stmt->get_result()->fetch_assoc();
+    
+    if (!$store) return $count;
+    
+    $store_id = $store['store_id'];
+    
+    // Check for recently added suppliers (last 7 days)
+    $recent_suppliers = $conn->prepare("
+        SELECT s.supplier_id, s.supplier_name, s.created_at
+        FROM suppliers s
+        WHERE s.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        ORDER BY s.created_at DESC
+        LIMIT 5
+    ");
+    $recent_suppliers->execute();
+    
+    foreach ($recent_suppliers->get_result()->fetch_all(MYSQLI_ASSOC) as $supplier) {
+        // Check if we already notified about this supplier
+        $notified_check = $conn->prepare("
+            SELECT 1 FROM notifications 
+            WHERE user_id = ? AND type = 'achievement' 
+              AND reference_id = ? AND reference_type = 'supplier'
+            LIMIT 1
+        ");
+        $notified_check->bind_param('ii', $user_id, $supplier['supplier_id']);
+        $notified_check->execute();
+        
+        if ($notified_check->get_result()->num_rows === 0) {
+            $created = createNotification(
+                $conn, $user_id,
+                NOTIF_TYPE_ACHIEVEMENT,
+                '🤝 New Supplier Added: ' . $supplier['supplier_name'],
+                'New supplier "' . $supplier['supplier_name'] . '" has been added to the system.',
+                NOTIF_PRIORITY_LOW,
+                $supplier['supplier_id'],
+                'supplier'
+            );
+            if ($created) $count++;
+        }
+    }
+    
+    // Check for low stock items that need reordering (supplier alerts)
+    $reorder_alerts = $conn->prepare("
+        SELECT gi.item_id, gi.item_name, gi.quantity, gi.unit,
+               gi.reorder_level, gi.reorder_quantity,
+               s.supplier_name, s.supplier_id
+        FROM grocery_items gi
+        LEFT JOIN suppliers s ON gi.supplier_id = s.supplier_id
+        WHERE gi.store_id = ?
+          AND gi.quantity <= gi.reorder_level
+          AND gi.supplier_id IS NOT NULL
+        ORDER BY gi.quantity ASC
+        LIMIT 5
+    ");
+    $reorder_alerts->bind_param('i', $store_id);
+    $reorder_alerts->execute();
+    
+    foreach ($reorder_alerts->get_result()->fetch_all(MYSQLI_ASSOC) as $item) {
+        // Create a unique reference for this reorder alert
+        $ref_id = 'reorder_' . $item['item_id'] . '_' . date('Y-m-d');
+        
+        // Check if we already notified about this reorder need today
+        $notified_check = $conn->prepare("
+            SELECT 1 FROM notifications 
+            WHERE user_id = ? AND type = 'achievement' 
+              AND reference_type = 'reorder_alert'
+              AND DATE(created_at) = CURDATE()
+            LIMIT 1
+        ");
+        $notified_check->bind_param('i', $user_id);
+        $notified_check->execute();
+        
+        if ($notified_check->get_result()->num_rows === 0) {
+            $created = createNotification(
+                $conn, $user_id,
+                NOTIF_TYPE_ACHIEVEMENT,
+                '📋 Reorder Needed: ' . $item['item_name'],
+                $item['item_name'] . ' needs reordering. Current stock: ' . $item['quantity'] . ' ' . $item['unit'] .
+                '. Suggested: ' . $item['reorder_quantity'] . ' ' . $item['unit'] .
+                ($item['supplier_name'] ? ' from ' . $item['supplier_name'] : ''),
+                NOTIF_PRIORITY_MEDIUM,
+                $item['item_id'],
+                'reorder_alert'
+            );
+            if ($created) $count++;
+        }
+    }
+    
+    return $count;
+}
+
+// ──────────────────────────────────────────────
+// Achievement notifications (badges + points)
 // ──────────────────────────────────────────────
 
 function generateAchievementNotifications($conn, int $user_id): int {
@@ -632,12 +880,59 @@ function generateAchievementNotifications($conn, int $user_id): int {
 
     }
 
-
-
     return $count;
 
 }
 
+
+// ──────────────────────────────────────────────
+
+// System notifications (group invites, updates, etc.)
+
+// ──────────────────────────────────────────────
+
+function generateSystemNotifications($conn, int $user_id): int {
+
+    $count = 0;
+
+    
+
+    // For now, system notifications are minimal
+    // Can be extended later for other system events
+    
+    // Example: Welcome message for new users (only once)
+    $welcome_check = $conn->prepare("
+        SELECT 1 FROM notifications 
+        WHERE user_id = ? AND type = 'system' AND reference_type = 'welcome'
+        LIMIT 1
+    ");
+    $welcome_check->bind_param('i', $user_id);
+    $welcome_check->execute();
+    
+    if ($welcome_check->get_result()->num_rows === 0) {
+        // Get user info for personalized welcome
+        $user_stmt = $conn->prepare("SELECT full_name FROM users WHERE user_id = ?");
+        $user_stmt->bind_param('i', $user_id);
+        $user_stmt->execute();
+        $user_info = $user_stmt->get_result()->fetch_assoc();
+        
+        if ($user_info) {
+            $created = createNotification(
+                $conn, $user_id,
+                NOTIF_TYPE_SYSTEM,
+                '� Welcome to StockFlow!',
+                'Welcome ' . $user_info['full_name'] . '! Start tracking your inventory and never waste food again.',
+                NOTIF_PRIORITY_LOW,
+                $user_id,
+                'welcome'
+            );
+            if ($created) $count++;
+        }
+    }
+
+    return $count;
+
+}
 
 
 // ──────────────────────────────────────────────

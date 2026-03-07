@@ -345,6 +345,12 @@ require_once(__DIR__ . '/../../../includes/header.php');
                                             </svg>
                                             Consume
                                         </a>
+                                        <a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/item/spoil_item.php?id=<?php echo $item['item_id']; ?>" class="warning">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                                            </svg>
+                                            Mark as Spoiled
+                                        </a>
                                         <a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/item/delete_item.php?id=<?php echo $item['item_id']; ?>" class="danger">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>

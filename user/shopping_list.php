@@ -24,89 +24,126 @@ ensureShoppingListTables($conn);
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Enable error reporting for debugging but capture output
+    error_reporting(E_ALL);
+    ini_set('display_errors', 0); // Don't display errors to browser
+    
+    // Start output buffering to catch any unexpected output
+    ob_start();
+    
     header('Content-Type: application/json');
     
-    switch ($_POST['action']) {
-        case 'auto_generate':
-            $count = autoGenerateShoppingList($conn, $user_id);
-            echo json_encode(['success' => true, 'count' => $count]);
-            exit;
-            
-        case 'add_item':
-            $data = [
-                'item_name' => trim($_POST['item_name'] ?? ''),
-                'quantity' => floatval($_POST['quantity'] ?? 1),
-                'unit' => trim($_POST['unit'] ?? 'piece'),
-                'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
-                'priority' => $_POST['priority'] ?? 'medium',
-                'notes' => trim($_POST['notes'] ?? '')
-            ];
-            
-            if (empty($data['item_name'])) {
-                echo json_encode(['success' => false, 'message' => 'Item name is required']);
-                exit;
-            }
-            
-            $success = addShoppingListItem($conn, $user_id, $data);
-            echo json_encode(['success' => $success]);
-            exit;
-            
-        case 'update_item':
-            $list_item_id = (int) ($_POST['list_item_id'] ?? 0);
-            $data = [
-                'item_name' => trim($_POST['item_name'] ?? ''),
-                'quantity' => floatval($_POST['quantity'] ?? 1),
-                'unit' => trim($_POST['unit'] ?? 'piece'),
-                'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
-                'priority' => $_POST['priority'] ?? 'medium',
-                'notes' => trim($_POST['notes'] ?? '')
-            ];
-            
-            $success = updateShoppingListItem($conn, $list_item_id, $user_id, $data);
-            echo json_encode(['success' => $success]);
-            exit;
-            
-        case 'toggle_purchased':
-            $list_item_id = (int) ($_POST['list_item_id'] ?? 0);
-            $is_purchased = (int) ($_POST['is_purchased'] ?? 0);
-            
-            if ($is_purchased) {
-                $success = markItemPurchased($conn, $list_item_id, $user_id);
-            } else {
-                $success = markItemUnpurchased($conn, $list_item_id, $user_id);
-            }
-            
-            echo json_encode(['success' => $success]);
-            exit;
-            
-        case 'delete_item':
-            $list_item_id = (int) ($_POST['list_item_id'] ?? 0);
-            $success = deleteShoppingListItem($conn, $list_item_id, $user_id);
-            echo json_encode(['success' => $success]);
-            exit;
-            
-        case 'clear_purchased':
-            $success = clearPurchasedItems($conn, $user_id);
-            echo json_encode(['success' => $success]);
-            exit;
-            
-        case 'clear_all':
-            $success = clearShoppingList($conn, $user_id);
-            echo json_encode(['success' => $success]);
-            exit;
-            
-        case 'save_settings':
-            $settings = [
-                'auto_add_low_stock' => isset($_POST['auto_add_low_stock']) ? 1 : 0,
-                'low_stock_threshold' => floatval($_POST['low_stock_threshold'] ?? 2.00),
-                'auto_add_expiring' => isset($_POST['auto_add_expiring']) ? 1 : 0,
-                'expiring_days' => (int) ($_POST['expiring_days'] ?? 3)
-            ];
-            
-            $success = saveShoppingListSettings($conn, $user_id, $settings);
-            echo json_encode(['success' => $success]);
-            exit;
+    try {
+        switch ($_POST['action']) {
+            case 'auto_generate':
+                try {
+                    $count = autoGenerateShoppingList($conn, $user_id);
+                    echo json_encode(['success' => true, 'count' => $count]);
+                } catch (Exception $e) {
+                    echo json_encode([
+                        'success' => false, 
+                        'message' => 'Auto-generate failed: ' . $e->getMessage(),
+                        'debug' => 'Error in autoGenerateShoppingList function'
+                    ]);
+                }
+                break;
+                
+            case 'add_item':
+                $data = [
+                    'item_name' => trim($_POST['item_name'] ?? ''),
+                    'quantity' => floatval($_POST['quantity'] ?? 1),
+                    'unit' => trim($_POST['unit'] ?? 'piece'),
+                    'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
+                    'priority' => $_POST['priority'] ?? 'medium',
+                    'notes' => trim($_POST['notes'] ?? '')
+                ];
+                
+                if (empty($data['item_name'])) {
+                    echo json_encode(['success' => false, 'message' => 'Item name is required']);
+                    exit;
+                }
+                
+                $success = addShoppingListItem($conn, $user_id, $data);
+                echo json_encode(['success' => $success]);
+                break;
+                
+            case 'update_item':
+                $list_item_id = (int) ($_POST['list_item_id'] ?? 0);
+                $data = [
+                    'item_name' => trim($_POST['item_name'] ?? ''),
+                    'quantity' => floatval($_POST['quantity'] ?? 1),
+                    'unit' => trim($_POST['unit'] ?? 'piece'),
+                    'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
+                    'priority' => $_POST['priority'] ?? 'medium',
+                    'notes' => trim($_POST['notes'] ?? '')
+                ];
+                
+                $success = updateShoppingListItem($conn, $list_item_id, $user_id, $data);
+                echo json_encode(['success' => $success]);
+                break;
+                
+            case 'toggle_purchased':
+                $list_item_id = (int) ($_POST['list_item_id'] ?? 0);
+                $is_purchased = (int) ($_POST['is_purchased'] ?? 0);
+                
+                if ($is_purchased) {
+                    $success = markItemPurchased($conn, $list_item_id, $user_id);
+                } else {
+                    $success = markItemUnpurchased($conn, $list_item_id, $user_id);
+                }
+                
+                echo json_encode(['success' => $success]);
+                break;
+                
+            case 'delete_item':
+                $list_item_id = (int) ($_POST['list_item_id'] ?? 0);
+                $success = deleteShoppingListItem($conn, $list_item_id, $user_id);
+                echo json_encode(['success' => $success]);
+                break;
+                
+            case 'clear_purchased':
+                $success = clearPurchasedItems($conn, $user_id);
+                echo json_encode(['success' => $success]);
+                break;
+                
+            case 'clear_all':
+                $success = clearShoppingList($conn, $user_id);
+                echo json_encode(['success' => $success]);
+                break;
+                
+            case 'save_settings':
+                $settings = [
+                    'auto_add_low_stock' => isset($_POST['auto_add_low_stock']) ? 1 : 0,
+                    'low_stock_threshold' => floatval($_POST['low_stock_threshold'] ?? 2.00),
+                    'auto_add_expiring' => isset($_POST['auto_add_expiring']) ? 1 : 0,
+                    'expiring_days' => (int) ($_POST['expiring_days'] ?? 3)
+                ];
+                
+                $success = saveShoppingListSettings($conn, $user_id, $settings);
+                echo json_encode(['success' => $success]);
+                break;
+                
+            default:
+                echo json_encode(['success' => false, 'message' => 'Invalid action']);
+                break;
+        }
+    } catch (Exception $e) {
+        // Clean any output that might have been generated
+        ob_clean();
+        
+        // Log the error for debugging
+        error_log("Shopping List AJAX Error: " . $e->getMessage());
+        
+        // Return a proper JSON error response
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Server error occurred. Please try again.'
+        ]);
     }
+    
+    // Clean output buffer and exit
+    ob_end_flush();
+    exit;
 }
 
 // Get data for page
@@ -141,9 +178,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
             </div>
             <div class="header-actions">
                 <?php if ($stats['pending_items'] > 0): ?>
-                <button class="btn-danger" id="btnClearPurchased">
+                <button class="btn-danger modal-trigger" data-modal="clearPurchasedModal">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 6l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14M10 11v6M14 11v6"/>
                     </svg>
                     Clear Purchased
                 </button>
@@ -186,9 +223,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                     <h2 class="section-title">Your List</h2>
                     <div class="section-actions">
                         <?php if ($stats['total_items'] > 0): ?>
-                        <button class="btn-icon btn-danger" id="btnClearAll" title="Clear all items">
+                        <button class="btn-icon btn-danger modal-trigger" data-modal="clearAllModal" title="Clear all items">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 6l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14M10 11v6M14 11v6"/>
                             </svg>
                         </button>
                         <?php endif; ?>
@@ -295,8 +332,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                 <h3 class="add-form-title">Add Item Manually</h3>
                 <form class="add-item-form" id="addItemForm">
                     <div class="form-group">
-                        <label class="form-label">Item Name *</label>
+                        <label class="form-label" for="item_name">Item Name *</label>
                         <input type="text" 
+                               id="item_name"
                                name="item_name" 
                                class="form-input" 
                                placeholder="e.g., Milk, Eggs, Bread"
@@ -305,8 +343,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Quantity</label>
+                            <label class="form-label" for="quantity">Quantity</label>
                             <input type="number" 
+                                   id="quantity"
                                    name="quantity" 
                                    class="form-input" 
                                    value="1" 
@@ -314,8 +353,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                                    min="0.01">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Unit</label>
+                            <label class="form-label" for="unit">Unit</label>
                             <input type="text" 
+                                   id="unit"
                                    name="unit" 
                                    class="form-input" 
                                    value="piece"
@@ -325,8 +365,8 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Category</label>
-                            <select name="category_id" class="form-select">
+                            <label class="form-label" for="category_id">Category</label>
+                            <select id="category_id" name="category_id" class="form-select">
                                 <option value="">None</option>
                                 <?php foreach ($categories as $cat): ?>
                                     <option value="<?= $cat['category_id'] ?>">
@@ -336,8 +376,8 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Priority</label>
-                            <select name="priority" class="form-select">
+                            <label class="form-label" for="priority">Priority</label>
+                            <select id="priority" name="priority" class="form-select">
                                 <option value="low">Low</option>
                                 <option value="medium" selected>Medium</option>
                                 <option value="high">High</option>
@@ -346,8 +386,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Notes (Optional)</label>
-                        <textarea name="notes" 
+                        <label class="form-label" for="notes">Notes (Optional)</label>
+                        <textarea id="notes"
+                                  name="notes" 
                                   class="form-textarea" 
                                   placeholder="Any additional notes..."></textarea>
                     </div>
@@ -376,6 +417,7 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" 
+                                           id="auto_add_low_stock"
                                            name="auto_add_low_stock" 
                                            <?= $settings['auto_add_low_stock'] ? 'checked' : '' ?>>
                                     <span class="toggle-slider"></span>
@@ -383,8 +425,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                             </div>
                             
                             <div style="padding: 12px 0; font-size: 11px; color: rgba(0,0,0,0.6);">
-                                <label>Low stock threshold: 
+                                <label for="low_stock_threshold">Low stock threshold: 
                                     <input type="number" 
+                                           id="low_stock_threshold"
                                            name="low_stock_threshold" 
                                            class="form-input threshold-input"
                                            value="<?= $settings['low_stock_threshold'] ?>"
@@ -403,6 +446,7 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" 
+                                           id="auto_add_expiring"
                                            name="auto_add_expiring"
                                            <?= $settings['auto_add_expiring'] ? 'checked' : '' ?>>
                                     <span class="toggle-slider"></span>
@@ -410,8 +454,9 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
                             </div>
                             
                             <div style="padding: 12px 0; font-size: 11px; color: rgba(0,0,0,0.6);">
-                                <label>Alert when expiring in: 
+                                <label for="expiring_days">Alert when expiring in: 
                                     <input type="number" 
+                                           id="expiring_days"
                                            name="expiring_days" 
                                            class="form-input threshold-input"
                                            value="<?= $settings['expiring_days'] ?>"
@@ -442,6 +487,67 @@ $low_stock_items = getLowStockItems($conn, $user_id, $settings['low_stock_thresh
 <!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- Clear Purchased Modal -->
+<div class="modal" id="clearPurchasedModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 6l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14M10 11v6M14 11v6"/>
+                </svg>
+            </div>
+            <div class="modal-title">Clear Purchased Items</div>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to remove all purchased items from your shopping list?</p>
+            <p class="modal-subtitle">This action will remove <?= $stats['purchased_items'] ?> purchased item(s) and cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary modal-close">Cancel</button>
+            <button type="button" class="btn-danger" id="confirmClearPurchased">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 6l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14M10 11v6M14 11v6"/>
+                </svg>
+                Clear Purchased
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Clear All Modal -->
+<div class="modal" id="clearAllModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 6l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14M10 11v6M14 11v6"/>
+                </svg>
+            </div>
+            <div class="modal-title">Clear Shopping List</div>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to clear your entire shopping list?</p>
+            <p class="modal-subtitle">This action will remove all <?= $stats['total_items'] ?> item(s) and cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary modal-close">Cancel</button>
+            <button type="button" class="btn-danger" id="confirmClearAll">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M4 6l2 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l2-14M10 11v6M14 11v6"/>
+                </svg>
+                Clear All Items
+            </button>
+        </div>
+    </div>
+</div>
+
+<?php require_once '../includes/footer.php'; ?>
+
+</body>
+</html>
+
 <script>
 // Toast helper
 function showToast(message, type = 'success') {
@@ -468,7 +574,21 @@ async function apiPost(data) {
     const fd = new FormData();
     Object.entries(data).forEach(([k, v]) => fd.append(k, v));
     const res = await fetch(window.location.pathname, { method: 'POST', body: fd });
-    return res.json();
+    
+    const responseText = await res.text();
+    
+    // Check if response looks like JSON
+    if (!responseText.trim().startsWith('{') && !responseText.trim().startsWith('[')) {
+        console.error('Server returned non-JSON response:', responseText);
+        throw new Error('Server returned an invalid response');
+    }
+    
+    try {
+        return JSON.parse(responseText);
+    } catch (e) {
+        console.error('JSON parse error:', e, 'Response:', responseText);
+        throw new Error('Invalid JSON response from server');
+    }
 }
 
 // Auto-generate list
@@ -554,28 +674,85 @@ document.querySelectorAll('.btn-delete').forEach(btn => {
     });
 });
 
-// Clear purchased
-document.getElementById('btnClearPurchased')?.addEventListener('click', async () => {
-    if (!confirm('Clear all purchased items?')) return;
+// Clear purchased modal
+document.getElementById('confirmClearPurchased')?.addEventListener('click', async () => {
+    const modal = document.getElementById('clearPurchasedModal');
+    modal.classList.remove('show');
     
     const data = await apiPost({ action: 'clear_purchased' });
     
     if (data.success) {
         showToast('Purchased items cleared', 'success');
         setTimeout(() => location.reload(), 800);
+    } else {
+        showToast('Failed to clear purchased items', 'error');
     }
 });
 
-// Clear all
-document.getElementById('btnClearAll')?.addEventListener('click', async () => {
-    if (!confirm('Clear entire shopping list? This cannot be undone.')) return;
+// Clear all modal
+document.getElementById('confirmClearAll')?.addEventListener('click', async () => {
+    const modal = document.getElementById('clearAllModal');
+    modal.classList.remove('show');
     
     const data = await apiPost({ action: 'clear_all' });
     
     if (data.success) {
         showToast('Shopping list cleared', 'success');
         setTimeout(() => location.reload(), 800);
+    } else {
+        showToast('Failed to clear shopping list', 'error');
     }
+});
+
+// Modal triggers - handle both custom and Bootstrap-style attributes
+document.querySelectorAll('[data-bs-toggle="modal"], .modal-trigger').forEach(btn => {
+    btn.addEventListener('click', () => {
+        let modalId = btn.dataset.bsTarget || btn.dataset.modal;
+        
+        // Remove # if present
+        if (modalId && modalId.startsWith('#')) {
+            modalId = modalId.substring(1);
+        }
+        
+        const modal = document.getElementById(modalId);
+        
+        if (modal) {
+            modal.classList.add('show');
+        }
+    });
+});
+
+// Modal close handlers - use event delegation for reliability
+document.addEventListener('click', (e) => {
+    // Handle modal-close buttons
+    if (e.target.classList.contains('modal-close') || e.target.closest('.modal-close')) {
+        const btn = e.target.classList.contains('modal-close') ? e.target : e.target.closest('.modal-close');
+        const modal = btn.closest('.modal');
+        if (modal) {
+            console.log('Closing modal via modal-close button');
+            modal.classList.remove('show');
+        }
+    }
+    
+    // Handle backdrop clicks
+    if (e.target.classList.contains('modal-backdrop')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            console.log('Closing modal via backdrop click');
+            modal.classList.remove('show');
+        }
+    }
+});
+
+// Fallback: Also try direct selection
+document.querySelectorAll('.modal-close').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const modal = btn.closest('.modal');
+        if (modal) {
+            console.log('Closing modal via direct event listener');
+            modal.classList.remove('show');
+        }
+    });
 });
 
 // Save settings
@@ -599,8 +776,3 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
     }
 });
 </script>
-
-<?php require_once '../includes/footer.php'; ?>
-
-</body>
-</html>

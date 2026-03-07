@@ -112,6 +112,8 @@ select { cursor: pointer; appearance: none; background-image: url("data:image/sv
 .menu-dropdown a:hover { background: #fafafa; }
 .menu-dropdown a.danger { color: #b91c1c; }
 .menu-dropdown a.danger:hover { background: #fef2f2; }
+.menu-dropdown a.warning { color: #d97706; }
+.menu-dropdown a.warning:hover { background: #fef3c7; }
 
 /* Item Body */
 .item-body { margin-bottom: 20px; }

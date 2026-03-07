@@ -249,6 +249,56 @@ function generateLowStockNotifications($conn, int $user_id): int {
 }
 
 // ──────────────────────────────────────────────
+// Customer low stock notifications 
+// Uses customer_items.quantity <= 1 (or configurable threshold)
+// ──────────────────────────────────────────────
+function generateCustomerLowStockNotifications($conn, int $user_id): int {
+    $count = 0;
+    
+    // Get groups the user belongs to
+    $g = $conn->prepare("SELECT group_id FROM group_members WHERE user_id = ?");
+    $g->bind_param('i', $user_id);
+    $g->execute();
+    $groups = array_column($g->get_result()->fetch_all(MYSQLI_ASSOC), 'group_id');
+    if (empty($groups)) return 0;
+    
+    $placeholders = implode(',', array_fill(0, count($groups), '?'));
+    $types = str_repeat('i', count($groups));
+    
+    // Low stock items (quantity <= 1)
+    $low = $conn->prepare("
+        SELECT ci.item_id, ci.item_name, ci.quantity, ci.unit,
+               c.category_name, g.group_name
+        FROM customer_items ci
+        LEFT JOIN categories c ON ci.category_id = c.category_id
+        LEFT JOIN groups g ON ci.group_id = g.group_id
+        WHERE ci.group_id IN ($placeholders)
+          AND ci.quantity <= 1
+          AND ci.quantity > 0
+        ORDER BY ci.quantity ASC, ci.item_name ASC
+    ");
+    $low->bind_param($types, ...$groups);
+    $low->execute();
+    
+    foreach ($low->get_result()->fetch_all(MYSQLI_ASSOC) as $item) {
+        $created = createNotification(
+            $conn, $user_id,
+            NOTIF_TYPE_LOW_STOCK,
+            'Low Stock: ' . $item['item_name'],
+            $item['item_name'] . ' in ' . $item['group_name'] . ' is running low (' 
+                . $item['quantity'] . ' ' . $item['unit'] . ' remaining).'
+                . ' Consider restocking soon.',
+            NOTIF_PRIORITY_MEDIUM,
+            $item['item_id'],
+            'customer_item_stock'
+        );
+        if ($created) $count++;
+    }
+    
+    return $count;
+}
+
+// ──────────────────────────────────────────────
 // Summary: expiring items count for dashboard widget
 // ──────────────────────────────────────────────
 function getExpirySummary($conn, int $user_id, string $role): array {

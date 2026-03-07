@@ -112,69 +112,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $alert_flag = ($expiry_status !== 'fresh') ? 1 : 0;
                 
-                // Insert into grocery_items
-                $insert_item = $conn->prepare("
-                    INSERT INTO grocery_items
-                        (item_name, barcode, catalog_id, category_id,
-                         supplier_id, supplier_product_id, purchase_order_id,
-                         batch_number, quantity, unit,
-                         purchase_date, received_date, expiry_date,
-                         expiry_status, alert_flag,
-                         cost_price, selling_price,
-                         reorder_level, reorder_quantity,
-                         sku, created_by, store_id)
-                    VALUES
-                        (?, ?, ?, ?,
-                         ?, ?, ?,
-                         ?, ?, ?,
-                         ?, ?, ?,
-                         ?, ?,
-                         ?, ?,
-                         ?, ?,
-                         ?, ?, ?)
+                // Check if existing grocery item exists with same product, store, supplier, expiry, and batch
+                $existing_item = null;
+                $check_existing = $conn->prepare("
+                    SELECT item_id, quantity, expiry_date, batch_number
+                    FROM grocery_items 
+                    WHERE catalog_id = ? 
+                      AND store_id = ? 
+                      AND supplier_id = ? 
+                      AND expiry_date = ? 
+                      AND batch_number = COALESCE(?, batch_number)
+                      AND (purchase_order_id IS NULL OR purchase_order_id = ?)
+                    LIMIT 1
                 ");
-                
-                $item_name = $item['product_name'];
-                $barcode = ''; // Empty barcode for received items
-                $catalog_id = $item['catalog_id'] ?: null;
-                $category_id = $item['category_id'] ?: 1; // Default category
-                $supplier_id = $po_info['supplier_id'];
-                $supplier_product_id = $item['supplier_product_id'];
-                $unit = 'pcs'; // Default unit, you might want to track this
-                $purchase_date = $po_info['order_date'];
-                $reorder_level = 10; // Default values
-                $reorder_quantity = 50;
-                $sku = ''; // Can be generated or left empty
-                
-                $insert_item->bind_param(
-                    "ssiiiiisdssssiddiisiii",
-                    $item_name, $barcode, $catalog_id, $category_id,
-                    $supplier_id, $supplier_product_id, $po_id,
-                    $batch_number, $quantity_received, $unit,
-                    $purchase_date, $receiving_date, $expiry_date,
-                    $expiry_status, $alert_flag,
-                    $cost_price, $selling_price,
-                    $reorder_level, $reorder_quantity,
-                    $sku, $user_id, $store_id
+                $check_existing->bind_param('iiissi', 
+                    $item['catalog_id'], 
+                    $store_id, 
+                    $po_info['supplier_id'], 
+                    $expiry_date, 
+                    $batch_number, 
+                    $po_id
                 );
+                $check_existing->execute();
+                $existing_result = $check_existing->get_result()->fetch_assoc();
+                $check_existing->close();
                 
-                $insert_item->execute();
-                $new_grocery_item_id = $conn->insert_id;
-                $insert_item->close();
-                
-                // Log inventory update
-                $log_update = $conn->prepare("
-                    INSERT INTO grocery_inventory_updates
-                        (item_id, store_id, update_type, quantity_change, updated_by, notes)
-                    VALUES (?, ?, 'received', ?, ?, ?)
-                ");
-                $notes = "Received via PO {$po_info['po_number']}";
-                if ($batch_number) {
-                    $notes .= " — Batch: $batch_number";
+                if ($existing_result) {
+                    // Update existing item quantity (same expiry date and batch)
+                    $new_quantity = $existing_result['quantity'] + $quantity_received;
+                    $update_existing = $conn->prepare("
+                        UPDATE grocery_items 
+                        SET quantity = ?, 
+                            last_updated = CURRENT_TIMESTAMP,
+                            purchase_order_id = ?
+                        WHERE item_id = ?
+                    ");
+                    $update_existing->bind_param('dii', $new_quantity, $po_id, $existing_result['item_id']);
+                    $update_existing->execute();
+                    $update_existing->close();
+                    
+                    $new_grocery_item_id = $existing_result['item_id'];
+                    
+                    // Log inventory update
+                    $log_update = $conn->prepare("
+                        INSERT INTO grocery_inventory_updates
+                            (item_id, store_id, update_type, quantity_change, updated_by, notes)
+                        VALUES (?, ?, 'received', ?, ?, ?)
+                    ");
+                    $notes = "Received via PO {$po_info['po_number']} (merged with same expiry/batch)";
+                    if ($batch_number) {
+                        $notes .= " — Batch: $batch_number";
+                    }
+                    $log_update->bind_param('iidis', $new_grocery_item_id, $store_id, $quantity_received, $user_id, $notes);
+                    $log_update->execute();
+                    $log_update->close();
+                } else {
+                    // Check if same product exists with different expiry date (for user info)
+                    $similar_items = $conn->prepare("
+                        SELECT COUNT(*) as count, 
+                               GROUP_CONCAT(DISTINCT expiry_date ORDER BY expiry_date) as expiry_dates
+                        FROM grocery_items 
+                        WHERE catalog_id = ? 
+                          AND store_id = ? 
+                          AND supplier_id = ?
+                          AND expiry_date != ?
+                    ");
+                    $similar_items->bind_param('iiis', 
+                        $item['catalog_id'], 
+                        $store_id, 
+                        $po_info['supplier_id'], 
+                        $expiry_date
+                    );
+                    $similar_items->execute();
+                    $similar_result = $similar_items->get_result()->fetch_assoc();
+                    $similar_items->close();
+                    
+                    // Insert new grocery item (different expiry date or batch)
+                    $insert_item = $conn->prepare("
+                        INSERT INTO grocery_items
+                            (item_name, barcode, catalog_id, category_id,
+                             supplier_id, supplier_product_id, purchase_order_id,
+                             batch_number, quantity, unit,
+                             purchase_date, received_date, expiry_date,
+                             expiry_status, alert_flag,
+                             cost_price, selling_price,
+                             reorder_level, reorder_quantity,
+                             sku, created_by, store_id)
+                        VALUES
+                            (?, ?, ?, ?,
+                             ?, ?, ?,
+                             ?, ?, ?,
+                             ?, ?, ?,
+                             ?, ?,
+                             ?, ?,
+                             ?, ?,
+                             ?, ?, ?)
+                    ");
+                    
+                    $item_name = $item['product_name'];
+                    $barcode = ''; // Empty barcode for received items
+                    $catalog_id = $item['catalog_id'] ?: null;
+                    $category_id = $item['category_id'] ?: 1; // Default category
+                    $supplier_id = $po_info['supplier_id'];
+                    $supplier_product_id = $item['supplier_product_id'];
+                    $unit = 'pcs'; // Default unit, you might want to track this
+                    $purchase_date = $po_info['order_date'];
+                    $reorder_level = 10; // Default values
+                    $reorder_quantity = 50;
+                    $sku = ''; // Can be generated or left empty
+                    
+                    $insert_item->bind_param(
+                        "ssiiiiisdssssiddiisiii",
+                        $item_name, $barcode, $catalog_id, $category_id,
+                        $supplier_id, $supplier_product_id, $po_id,
+                        $batch_number, $quantity_received, $unit,
+                        $purchase_date, $receiving_date, $expiry_date,
+                        $expiry_status, $alert_flag,
+                        $cost_price, $selling_price,
+                        $reorder_level, $reorder_quantity,
+                        $sku, $user_id, $store_id
+                    );
+                    
+                    $insert_item->execute();
+                    $new_grocery_item_id = $conn->insert_id;
+                    $insert_item->close();
+                    
+                    // Log inventory update with helpful note about expiry dates
+                    $log_update = $conn->prepare("
+                        INSERT INTO grocery_inventory_updates
+                            (item_id, store_id, update_type, quantity_change, updated_by, notes)
+                        VALUES (?, ?, 'received', ?, ?, ?)
+                    ");
+                    $notes = "Received via PO {$po_info['po_number']}";
+                    if ($batch_number) {
+                        $notes .= " — Batch: $batch_number";
+                    }
+                    if ($similar_result && $similar_result['count'] > 0) {
+                        $notes .= " — Different expiry date from existing stock";
+                    }
+                    $log_update->bind_param('iidis', $new_grocery_item_id, $store_id, $quantity_received, $user_id, $notes);
+                    $log_update->execute();
+                    $log_update->close();
                 }
-                $log_update->bind_param('iidis', $new_grocery_item_id, $store_id, $quantity_received, $user_id, $notes);
-                $log_update->execute();
-                $log_update->close();
                 
                 $total_received += $quantity_received;
             }

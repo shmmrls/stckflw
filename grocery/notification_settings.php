@@ -119,19 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         case 'save_preferences':
 
             $ok = saveNotificationPreferences($conn, $user_id, [
-
-                'expiry_enabled'      => isset($_POST['expiry_enabled'])      ? 1 : 0,
-
+                'expiry_enabled'      => ($_POST['expiry_enabled'] ?? '0') === '1' ? '1' : '0',
                 'expiry_days_before'  => max(1, min(30, (int) ($_POST['expiry_days_before'] ?? 7))),
-
-                'low_stock_enabled'   => isset($_POST['low_stock_enabled'])   ? 1 : 0,
-
-                'achievement_enabled' => isset($_POST['achievement_enabled']) ? 1 : 0,
-
-                'system_enabled'      => isset($_POST['system_enabled'])      ? 1 : 0,
-
-                'email_enabled'       => isset($_POST['email_enabled'])       ? 1 : 0,
-
+                'low_stock_enabled'   => ($_POST['low_stock_enabled'] ?? '0') === '1' ? '1' : '0',
+                'achievement_enabled' => ($_POST['achievement_enabled'] ?? '0') === '1' ? '1' : '0',
+                'system_enabled'      => ($_POST['system_enabled'] ?? '0') === '1' ? '1' : '0',
+                'group_notifications_enabled' => '0', // Grocery admin doesn't have this field
+                'email_enabled'       => '0', // Grocery admin doesn't have this field
             ]);
 
             echo json_encode(['success' => $ok]);
@@ -1221,25 +1215,29 @@ document.getElementById('btnRefresh').addEventListener('click', async () => {
 
 
 document.getElementById('prefsForm').addEventListener('submit', async (e) => {
-
     e.preventDefault();
-
     const fd   = new FormData(e.target);
-
     const body = { action: 'save_preferences' };
-
-    fd.forEach((v, k) => body[k] = v);
-
-    ['expiry_enabled','low_stock_enabled','achievement_enabled','system_enabled','email_enabled'].forEach(name => {
-
-        if (!(name in body)) body[name] = '0';
-
+    
+    // Get the actual state of all checkboxes from the DOM (grocery admin specific)
+    const checkboxNames = ['expiry_enabled','low_stock_enabled','achievement_enabled','system_enabled'];
+    
+    checkboxNames.forEach(name => {
+        const checkbox = document.querySelector(`input[name="${name}"]`);
+        if (checkbox) {
+            body[name] = checkbox.checked ? '1' : '0';
+        }
     });
-
+    
+    // Get non-checkbox form data (like expiry_days_before)
+    fd.forEach((v, k) => {
+        if (!checkboxNames.includes(k)) {
+            body[k] = v;
+        }
+    });
+    
     const data = await apiPost(body);
-
-    showToast(data.success ? 'Preferences saved' : 'Failed to save preferences', data.success ? 'success' : 'error');
-
+    showToast(data.success ? 'Preferences saved! Refresh page to see changes.' : 'Failed to save preferences', data.success ? 'success' : 'error');
 });
 
 </script>

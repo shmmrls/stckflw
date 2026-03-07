@@ -9,10 +9,17 @@ $user_id = getCurrentUserId();
 // Initialize notification system
 require_once __DIR__ . '/../includes/notifications_system.php';
 require_once __DIR__ . '/../includes/expiry_alerts.php';
+require_once __DIR__ . '/../includes/auto_waste_logging.php';
 ensureNotificationsTable($conn);
 
 // Run notification checks
 runNotificationChecks($conn, $user_id);
+
+// Update expired status for items that have passed expiry date
+updateExpiredStatus($conn);
+
+// Auto-log expired items as waste
+$auto_waste_result = autoLogExpiredItems($conn, $user_id);
 
 // Get user points
 $points_stmt = $conn->prepare("SELECT total_points FROM user_points WHERE user_id = ?");
@@ -37,8 +44,7 @@ $summary_stmt = $conn->prepare("
     SELECT 
         COUNT(ci.item_id) as total_items,
         SUM(CASE WHEN ci.expiry_status = 'near_expiry' THEN 1 ELSE 0 END) as near_expiry_items,
-        SUM(CASE WHEN ci.expiry_status = 'expired' THEN 1 ELSE 0 END) as expired_items,
-        SUM(ci.quantity) as total_quantity
+        SUM(CASE WHEN ci.expiry_status = 'expired' THEN 1 ELSE 0 END) as expired_items
     FROM customer_items ci
     INNER JOIN group_members gm ON ci.group_id = gm.group_id
     WHERE gm.user_id = ?
@@ -135,18 +141,6 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="stat-content">
                     <div class="stat-value"><?php echo number_format($summary['total_items'] ?? 0); ?></div>
                     <div class="stat-label">Total Items</div>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon stat-icon-success">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                </div>
-                <div class="stat-content">
-                    <div class="stat-value"><?php echo number_format($summary['total_quantity'] ?? 0, 2); ?></div>
-                    <div class="stat-label">Total Quantity</div>
                 </div>
             </div>
 

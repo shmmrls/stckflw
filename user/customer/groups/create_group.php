@@ -26,9 +26,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_group'])) {
         if ($stmt->execute()) {
             $group_id = $conn->insert_id;
             
-            // Add creator as member
-            $member_stmt = $conn->prepare("INSERT INTO group_members (group_id, user_id, member_role) VALUES (?, ?, 'parent')");
-            $member_stmt->bind_param("ii", $group_id, $user_id);
+            // Determine creator role based on group type
+            $creator_role = 'parent'; // default
+            switch ($group_type) {
+                case 'household':
+                    $creator_role = 'parent';
+                    break;
+                case 'co_living':
+                    $creator_role = 'member';
+                    break;
+                case 'small_business':
+                    $creator_role = 'manager';
+                    break;
+            }
+            
+            // Add creator as member with appropriate role
+            $member_stmt = $conn->prepare("INSERT INTO group_members (group_id, user_id, member_role) VALUES (?, ?, ?)");
+            $member_stmt->bind_param("iis", $group_id, $user_id, $creator_role);
             $member_stmt->execute();
             
             $success = "Group created successfully! Invitation Code: <strong>$invitation_code</strong>";
@@ -65,9 +79,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['join_group'])) {
             if ($check_stmt->get_result()->num_rows > 0) {
                 $error = "You are already a member of this group";
             } else {
-                // Add as member
-                $add_stmt = $conn->prepare("INSERT INTO group_members (group_id, user_id, member_role) VALUES (?, ?, 'member')");
-                $add_stmt->bind_param("ii", $group_id, $user_id);
+                // Get group type to determine member role
+                $group_type_stmt = $conn->prepare("SELECT group_type FROM groups WHERE group_id = ?");
+                $group_type_stmt->bind_param("i", $group_id);
+                $group_type_stmt->execute();
+                $group_type_result = $group_type_stmt->get_result()->fetch_assoc();
+                $group_type = $group_type_result['group_type'];
+                
+                // Determine member role based on group type
+                $member_role = 'member'; // default
+                switch ($group_type) {
+                    case 'household':
+                        $member_role = 'child';
+                        break;
+                    case 'co_living':
+                        $member_role = 'member';
+                        break;
+                    case 'small_business':
+                        $member_role = 'staff';
+                        break;
+                }
+                
+                // Add as member with appropriate role
+                $add_stmt = $conn->prepare("INSERT INTO group_members (group_id, user_id, member_role) VALUES (?, ?, ?)");
+                $add_stmt->bind_param("iis", $group_id, $user_id, $member_role);
                 
                 if ($add_stmt->execute()) {
                     $success = "Successfully joined the group!";
