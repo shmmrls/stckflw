@@ -237,21 +237,23 @@ require_once __DIR__ . '/../../includes/header.php';
                     </select>
                 </div>
 
-                <button type="submit" class="btn-filter">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                    </svg>
-                    Filter
-                </button>
-
-                <?php if (!empty($search) || $category_filter > 0): ?>
-                    <a href="view_product_catalog.php" class="btn-clear">
+                <div class="filter-group">
+                    <button type="submit" class="btn-filter">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
                         </svg>
-                        Clear
-                    </a>
-                <?php endif; ?>
+                        Filter
+                    </button>
+
+                    <?php if (!empty($search) || $category_filter > 0): ?>
+                        <a href="view_product_catalog.php" class="btn-clear">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                            Clear
+                        </a>
+                    <?php endif; ?>
+                </div>
             </form>
 
             <div class="results-summary">

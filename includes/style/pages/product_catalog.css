@@ -30,7 +30,7 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
 .btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #fafafa; color: #0a0a0a; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; border: 1px solid rgba(0,0,0,0.15); transition: all 0.3s ease; }
 .btn-secondary:hover { background: #0a0a0a; color: #ffffff; border-color: #0a0a0a; }
 
-.btn-filter { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #0a0a0a; color: #ffffff; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; border: none; cursor: pointer; transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; }
+.btn-filter { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #0a0a0a; color: #ffffff; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; border: none; cursor: pointer; transition: all 0.3s ease; font-family: 'Montserrat', sans-serif; height: 41px; }
 .btn-filter:hover { background: #1a1a1a; }
 
 .btn-clear { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: #fafafa; color: rgba(0,0,0,0.6); text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; border: 1px solid rgba(0,0,0,0.15); transition: all 0.3s ease; }
@@ -43,7 +43,7 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
 
 .search-wrapper { position: relative; display: flex; align-items: center; flex: 1; min-width: 300px; }
 .search-wrapper svg { position: absolute; left: 15px; color: rgba(0,0,0,0.4); pointer-events: none; }
-.search-input { width: 100%; padding: 10px 15px 10px 45px; border: 1px solid rgba(0,0,0,0.15); background: #fafafa; font-family: 'Montserrat', sans-serif; font-size: 13px; color: #0a0a0a; transition: all 0.3s ease; }
+.search-input { width: 100%; padding: 10px 15px 10px 45px; border: 1px solid rgba(0,0,0,0.15); background: #fafafa; font-family: 'Montserrat', sans-serif; font-size: 13px; color: #0a0a0a; transition: all 0.3s ease; height: 41px; }
 .search-input:focus { outline: none; border-color: #0a0a0a; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .search-input::placeholder { color: rgba(0,0,0,0.3); }
 

@@ -154,17 +154,34 @@ require_once __DIR__ . '/../../includes/header.php';
         <!-- Page Header -->
         <div class="page-header">
             <div class="header-content">
-                <h1 class="page-title">Analytics & Reports</h1>
-                <p class="page-subtitle"><?php echo htmlspecialchars($store_info['store_name']); ?> - Comprehensive Business Intelligence</p>
+                <br>
+                <div>
+                    <h1 class="page-title">Analytics & Reports</h1>
+                    <p class="page-subtitle"><?php echo htmlspecialchars($store_info['store_name']); ?> - Comprehensive Business Intelligence</p>
+                    <p class="report-timestamp" style="font-size: 11px; color: rgba(0,0,0,0.5); margin-top: 4px;">
+                        Generated: <span id="generated-time"><?php echo date('F d, Y g:i A'); ?></span>
+                    </p>
+                </div>
+                <br>
             </div>
-            <div class="header-actions">
-                <a href="../grocery_dashboard.php" class="btn btn-secondary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    Back to Dashboard
-                </a>
-            </div>
+        </div>
+
+        <!-- Export Bar -->
+        <div class="export-bar" style="display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 22px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="window.print()" style="margin-right: 0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                Print / Save PDF
+            </button>
+            <a href="../grocery_dashboard.php" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Dashboard
+            </a>
         </div>
 
         <!-- Summary Cards -->
@@ -295,6 +312,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                     <div class="progress-bar">
                                         <div class="progress-fill success" style="width: <?php echo $performance_pct; ?>%"></div>
                                     </div>
+                                    <span class="performance-percentage" style="display: none;"><?php echo round($performance_pct, 1); ?>%</span>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -478,7 +496,6 @@ require_once __DIR__ . '/../../includes/header.php';
     </div>
 </main>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
 <?php 
 $summary_stmt->close();
 $supplier_perf_stmt->close();
@@ -489,3 +506,58 @@ $store_info_stmt->close();
 $store_stmt->close();
 $conn->close();
 ?>
+
+<script>
+// Update generated timestamp when print dialog is opened
+window.addEventListener('beforeprint', function() {
+    const currentTime = new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+    
+    document.getElementById('generated-time').textContent = currentTime;
+});
+
+// Update generated time every minute
+setInterval(function() {
+    const now = new Date();
+    const timeString = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+    document.getElementById('generated-time').textContent = timeString;
+}, 60000);
+</script>
+
+<style>
+@media print {
+    .export-bar, header, footer { display: none !important; }
+    .report-section, .summary-card { break-inside: avoid; }
+    .report-timestamp { display: block !important; color: #000 !important; }
+    .page-header { text-align: center !important; border-bottom: 2px solid #000 !important; margin-bottom: 30px !important; padding-bottom: 20px !important; }
+    .header-content { justify-content: center !important; }
+    .page-title { font-size: 24px !important; color: #000 !important; margin-bottom: 8px !important; }
+    .page-subtitle { font-size: 14px !important; color: #333 !important; margin-bottom: 5px !important; }
+    .reports-page { background: #fff !important; padding: 20px !important; }
+    .summary-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 15px !important; margin-bottom: 20px !important; }
+    .summary-card { border: 1px solid #ccc !important; padding: 15px !important; margin-bottom: 10px !important; page-break-inside: avoid; }
+    .report-section { border: 1px solid #ccc !important; padding: 20px !important; margin-bottom: 20px !important; page-break-inside: avoid; }
+    .section-title { font-size: 18px !important; color: #000 !important; border-bottom: 1px solid #ccc !important; padding-bottom: 8px !important; margin-bottom: 15px !important; }
+    .data-table { border: 1px solid #ccc !important; font-size: 10px !important; }
+    .data-table th { background: #f5f5f5 !important; border: 1px solid #ccc !important; padding: 8px !important; }
+    .data-table td { border: 1px solid #ccc !important; padding: 8px !important; }
+    .progress-bar { display: none !important; }
+    .performance-percentage { display: inline !important; font-size: 10px !important; color: #000 !important; font-weight: bold; }
+    .badge-mini { display: inline-block !important; border: 1px solid #ccc !important; padding: 2px 4px !important; font-size: 8px !important; }
+}
+</style>
+
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

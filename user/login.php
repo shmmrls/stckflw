@@ -11,6 +11,10 @@ if (isset($_SESSION['user_id'])) {
         ob_end_clean();
         header("Location: " . $baseUrl . "/grocery/grocery_dashboard.php");
         exit();
+    } elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'customer') {
+        ob_end_clean();
+        header("Location: dashboard.php");
+        exit();
     } else {
         ob_end_clean();
         header("Location: dashboard.php");
@@ -63,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } elseif (!validateEmail($email)) {
             $_SESSION['error'] = "Please enter a valid email address.";
         } else {
-            $stmt = $conn->prepare("SELECT user_id, full_name, email, password, role, is_active FROM users WHERE email = ?");
+            $stmt = $conn->prepare("SELECT user_id, full_name, email, password, role, is_active FROM users WHERE email = ? AND role = 'customer'");
             $stmt->bind_param("s", $email);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -92,25 +96,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $_SESSION['user_email'] = $user['email'];
                         $_SESSION['role'] = $user['role'];
                         
-                        if ($user['role'] === 'grocery_admin') {
-                            ob_end_clean();
-                            header("Location: " . $baseUrl . "/grocery/grocery_dashboard.php");
-                            exit();
+                        // Customer login - always redirect to customer dashboard
+                        ob_end_clean();
+                        if (!empty($redirect_url)) {
+                            header("Location: " . $redirect_url);
                         } else {
-                            ob_end_clean();
-                            if (!empty($redirect_url)) {
-                                header("Location: " . $redirect_url);
-                            } else {
-                                header("Location: dashboard.php");
-                            }
-                            exit();
+                            header("Location: dashboard.php");
                         }
+                        exit();
                     }
                 } else {
                     $_SESSION['error'] = "Invalid email or password.";
                 }
             } else {
-                $_SESSION['error'] = "Invalid email or password.";
+                $_SESSION['error'] = "Invalid email or password. This login is for customers only.";
             }
 
             $stmt->close();

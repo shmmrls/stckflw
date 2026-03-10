@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['error'] = "Invalid email or password.";
                 }
             } else {
-                $_SESSION['error'] = "Invalid email or password. Please ensure you have verified your email address before logging in.";
+                $_SESSION['error'] = "Invalid email or password. This login is for grocery administrators only.";
             }
 
             $stmt->close();

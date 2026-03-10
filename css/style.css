@@ -14,10 +14,11 @@
 /* Reset + Base */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Main layout setup for sticky footer */
+/* Main layout setup for sticky footer - FIXED */
 html {
   min-height: 100vh;
   overflow-x: hidden;
+  overflow-y: auto; /* Allow vertical scrolling */
 }
 
 body { 
@@ -29,6 +30,7 @@ body {
   margin: 0;
   position: relative;
   overflow-x: hidden;
+  overflow-y: auto; /* FIXED: Allow vertical scrolling */
   padding-top: 74px; /* Adjust this value based on your header height */
 }
 
@@ -36,8 +38,11 @@ main {
   width: 100%;
   position: relative;
   z-index: 1;
-  padding-bottom: 60px; /* Height of footer + some spacing */
+  flex: 1; /* FIXED: Allow main to grow and push footer down */
+  padding-bottom: 80px; /* FIXED: Increased for fixed footer + extra spacing */
+  min-height: calc(100vh - 74px - 60px); /* FIXED: Ensure minimum height */
 }
+
 /* Header */
 .header-container {
   background: #fff;
@@ -514,7 +519,7 @@ main {
   font-size: 16px;
 }
 
-/* Footer styles */
+/* Footer styles - FIXED */
 .site-footer {
   background-color: #FFB6C1;
   color: #000000;
@@ -527,6 +532,7 @@ main {
   bottom: 0;
   left: 0;
   z-index: 50;
+  margin-top: auto; /* FIXED: Push to bottom */
 }
 
 .site-footer p {
@@ -1194,8 +1200,13 @@ main {
 
 /* Mobile responsive (≤950px) */
 @media (max-width: 950px) {
+  /* FIXED: Adjust body padding for smaller header */
+  body {
+    padding-top: 60px;
+  }
+
   .header-main {
-    padding: 12px 20px;
+    padding: 12px 20px !important;
   }
 
   .nav-container {
@@ -1209,6 +1220,8 @@ main {
   .mobile-overlay { 
     display: block; 
   }
+
+  
 
   .nav-container { 
     display: block;
@@ -1272,9 +1285,31 @@ main {
     padding: 10px 12px;
     font-size: 13px;
   }
+
+  /* FIXED: Ensure main has proper spacing on mobile */
+  main {
+    min-height: calc(100vh - 60px - 50px);
+    padding-bottom: 70px;
+  }
+
+  /* FIXED: Adjust auth section for mobile */
+  .luxury-auth-section {
+    min-height: auto;
+    padding: 30px 15px 30px;
+  }
 }
 
 @media (max-width: 480px) {
+  /* FIXED: Further adjustments for very small screens */
+  body {
+    padding-top: 56px;
+  }
+
+  main {
+    min-height: calc(100vh - 56px - 50px);
+    padding-bottom: 65px;
+  }
+
   .luxury-auth-container {
     border: none;
     box-shadow: none;
@@ -1295,5 +1330,11 @@ main {
   
   .alert {
     margin: 16px 24px;
+  }
+
+  /* FIXED: Ensure footer doesn't cover content */
+  .site-footer {
+    font-size: 12px;
+    padding: 12px 10px;
   }
 }

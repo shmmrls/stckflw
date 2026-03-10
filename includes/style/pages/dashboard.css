@@ -55,8 +55,8 @@ body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1
 /* Table */
 .table-wrapper { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table thead th { text-align: left; padding: 12px 10px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(0,0,0,0.5); font-weight: 600; border-bottom: 2px solid rgba(0,0,0,0.08); }
-.data-table tbody td { padding: 15px 10px; font-size: 13px; color: #0a0a0a; border-bottom: 1px solid rgba(0,0,0,0.05); letter-spacing: 0.3px; }
+.data-table thead th { text-align: center; padding: 12px 10px; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(0,0,0,0.5); font-weight: 600; border-bottom: 2px solid rgba(0,0,0,0.08); }
+.data-table tbody td { text-align: center; padding: 15px 10px; font-size: 13px; color: #0a0a0a; border-bottom: 1px solid rgba(0,0,0,0.05); letter-spacing: 0.3px; }
 .data-table tbody tr { transition: background 0.2s ease; }
 .data-table tbody tr:hover { background: #fafafa; }
 

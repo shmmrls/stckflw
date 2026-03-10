@@ -269,8 +269,8 @@ require_once __DIR__ . '/../../includes/header.php';
 .section-subtitle { font-size:12px; color:rgba(0,0,0,.5); letter-spacing:.3px; margin-bottom:22px; }
 
 .data-table { width:100%; border-collapse:collapse; }
-.data-table th { text-align:left; padding:11px 12px; background:#fafafa; border-bottom:2px solid rgba(0,0,0,.1); font-size:10px; text-transform:uppercase; letter-spacing:1px; color:rgba(0,0,0,.55); font-weight:600; }
-.data-table td { padding:12px; border-bottom:1px solid rgba(0,0,0,.05); font-size:13px; }
+.data-table th { text-align:center; padding:11px 12px; background:#fafafa; border-bottom:2px solid rgba(0,0,0,.1); font-size:10px; text-transform:uppercase; letter-spacing:1px; color:rgba(0,0,0,.55); font-weight:600; }
+.data-table td { text-align:center; padding:12px; border-bottom:1px solid rgba(0,0,0,.05); font-size:13px; }
 .data-table tr:hover { background:#fafafa; }
 
 .chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:20px; margin-top:20px; }
@@ -318,17 +318,119 @@ require_once __DIR__ . '/../../includes/header.php';
 @media print {
     .export-bar,.btn-secondary,header,footer,.page-header .btn-secondary { display:none !important; }
     .report-section,.summary-card,.chart-card { break-inside:avoid; }
+    .report-timestamp { display:block !important; color: #000 !important; text-align: center !important; }
+    .export-bar a[href*="dashboard"] { display:none !important; }
+    .page-header { text-align: center !important; border-bottom: 2px solid #000 !important; margin-bottom: 30px !important; padding-bottom: 20px !important; }
+    .header-content { justify-content: center !important; text-align: center !important; }
+    .page-title { font-size: 24px !important; color: #000 !important; margin-bottom: 8px !important; text-align: center !important; }
+    .page-subtitle { font-size: 14px !important; color: #333 !important; margin-bottom: 5px !important; text-align: center !important; }
+    .reports-page { background: #fff !important; padding: 20px !important; }
+    .summary-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 15px !important; margin-bottom: 20px !important; }
+    .summary-card { border: 1px solid #ccc !important; padding: 15px !important; margin-bottom: 10px !important; page-break-inside: avoid; }
+    .report-section { border: 1px solid #ccc !important; padding: 20px !important; margin-bottom: 20px !important; page-break-inside: avoid; }
+    .section-title { font-size: 18px !important; color: #000 !important; border-bottom: 1px solid #ccc !important; padding-bottom: 8px !important; margin-bottom: 15px !important; }
+    .data-table { border: 1px solid #ccc !important; font-size: 10px !important; }
+    .data-table th { background: #f5f5f5 !important; border: 1px solid #ccc !important; padding: 8px !important; }
+    .data-table td { border: 1px solid #ccc !important; padding: 8px !important; }
+    .chart-card { border: 1px solid #ccc !important; padding: 15px !important; margin-bottom: 15px !important; }
 }
-@media (max-width:768px) {
-    .reports-page { padding:70px 15px 40px; }
-    .page-header { padding:25px 20px; }
-    .page-title { font-size:22px; }
-    .chart-grid { grid-template-columns:1fr; }
-    .week-compare-grid { grid-template-columns:repeat(2,1fr); }
+/* ─── REPLACE the existing @media blocks inside reports.php <style> tag ─── */
+
+/* ── TABLET (≤ 768px) ─────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .reports-page { padding: 80px 16px 50px; }
+
+    .page-header { padding: 24px 20px; }
+    .page-title  { font-size: 22px; }
+    .header-content { flex-direction: column; align-items: flex-start; gap: 14px; }
+
+    /* summary: 2-col */
+    .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .summary-card { padding: 18px 14px; }
+    .summary-content h3 { font-size: 20px; }
+    .summary-content p  { font-size: 9px; }
+    .summary-icon { width: 40px; height: 40px; }
+    .summary-icon svg { width: 18px; height: 18px; }
+
+    .report-section { padding: 22px 18px; }
+
+    /* charts: single col */
+    .chart-grid { grid-template-columns: 1fr; gap: 14px; }
+
+    /* week compare: 2-col */
+    .week-compare-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .week-card { padding: 16px 14px; }
+    .week-card .wc-value { font-size: 22px; }
+
+    /* metrics: 2-col */
+    .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .metric-value { font-size: 22px; }
+    .metric-card { padding: 18px 14px; }
+
+    /* export bar */
+    .export-bar { flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+    .export-btn { flex: 1 1 calc(50% - 4px); justify-content: center; font-size: 9px; }
+
+    /* tables: scrollable */
+    .data-table { min-width: 520px; }
 }
-@media (max-width:480px) {
-    .week-compare-grid { grid-template-columns:1fr; }
-    .summary-grid { grid-template-columns:repeat(2,1fr); }
+
+/* ── MOBILE (≤ 480px) ─────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .reports-page { padding: 68px 12px 40px; }
+
+    /* header */
+    .page-header { padding: 18px 14px; }
+    .page-title  { font-size: 19px; line-height: 1.3; }
+    .page-subtitle { font-size: 11px; }
+    .btn-secondary { width: 100%; justify-content: center; padding: 12px 16px; }
+
+    /* summary cards: 2-col compact, centred icon+text */
+    .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .summary-card { flex-direction: column; align-items: center; text-align: center; padding: 14px 10px; gap: 8px; }
+    .summary-icon { width: 36px; height: 36px; }
+    .summary-icon svg { width: 16px; height: 16px; }
+    .summary-content h3 { font-size: 21px; }
+    .summary-content p  { font-size: 8.5px; letter-spacing: 0.8px; }
+    .summary-content small { display: none; } /* too small to read — hide on mobile */
+
+    /* sections */
+    .report-section { padding: 16px 13px; }
+    .section-title  { font-size: 17px; }
+    .section-subtitle { font-size: 10.5px; margin-bottom: 14px; }
+
+    /* charts */
+    .chart-grid { grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+    .chart-card { padding: 14px 12px; }
+    .chart-title { font-size: 11px; margin-bottom: 12px; }
+
+    /* weekly snapshot: 1-col on smallest screens */
+    .week-compare-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .week-card { padding: 14px 12px; }
+    .week-card .wc-label { font-size: 9px; }
+    .week-card .wc-value { font-size: 20px; }
+    .wc-change { font-size: 11px; }
+
+    /* metrics */
+    .metrics-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .metric-card { padding: 14px 10px; }
+    .metric-value { font-size: 19px; }
+    .metric-label { font-size: 9px; letter-spacing: 0.8px; }
+
+    /* export bar: two per row */
+    .export-bar { gap: 8px; }
+    .export-btn { flex: 1 1 calc(50% - 4px); justify-content: center; font-size: 8px; padding: 9px 8px; }
+
+    /* tables: horizontal scroll with hint */
+    .data-table { min-width: 480px; }
+    .data-table th { padding: 9px 7px; font-size: 7.5px; letter-spacing: 0.6px; }
+    .data-table td { padding: 10px 7px; font-size: 11.5px; }
+
+    /* tips box */
+    .tips-box { font-size: 12px; padding: 16px; line-height: 1.8; }
+
+    /* efficiency bar labels */
+    .efficiency-wrap { height: 13px; }
 }
 </style>
 
@@ -344,13 +446,10 @@ require_once __DIR__ . '/../../includes/header.php';
                     <?php echo htmlspecialchars($group_info['group_name'] ?? 'Personal'); ?>
                     &mdash; Inventory insights, waste reduction &amp; consumption trends
                 </p>
+                <p class="report-timestamp" style="font-size: 11px; color: rgba(0,0,0,0.5); margin-top: 4px;">
+                    Generated: <span id="generated-time"><?php echo date('F d, Y g:i A'); ?></span>
+                </p>
             </div>
-            <a href="../dashboard.php" class="btn-secondary">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7"/>
-                </svg>
-                Dashboard
-            </a>
         </div>
     </div>
 
@@ -378,6 +477,12 @@ require_once __DIR__ . '/../../includes/header.php';
                 <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
             Monthly Summary (CSV)
+        </a>
+        <a href="../dashboard.php" class="export-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Dashboard
         </a>
     </div>
 
@@ -897,3 +1002,35 @@ $points_stmt->close();
 $group_stmt->close();
 $conn->close();
 ?>
+
+<script>
+// Update generated timestamp when print dialog is opened
+window.addEventListener('beforeprint', function() {
+    const currentTime = new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+    
+    document.getElementById('generated-time').textContent = currentTime;
+});
+
+// Update generated time every minute
+setInterval(function() {
+    const now = new Date();
+    const timeString = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
+    document.getElementById('generated-time').textContent = timeString;
+}, 60000);
+</script>
+
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
