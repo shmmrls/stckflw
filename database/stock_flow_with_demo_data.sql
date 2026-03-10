@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 04, 2026 at 03:12 PM
+-- Generation Time: Mar 10, 2026 at 12:41 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1941,7 +1941,12 @@ INSERT INTO `barcode_scan_history` (`scan_id`, `user_id`, `barcode`, `scan_type`
 (1774, 1, '131727862825775', 'lookup', 0, NULL, '2026-03-04 13:53:07'),
 (1775, 1, '131727862825775', 'lookup', 0, NULL, '2026-03-04 13:53:08'),
 (1776, 1, '4800024405014', 'lookup', 1, NULL, '2026-03-04 13:53:50'),
-(1777, 1, '4800024405014', 'add_item', 1, 3, '2026-03-04 13:54:06');
+(1777, 1, '4800024405014', 'add_item', 1, 3, '2026-03-04 13:54:06'),
+(1778, 1, '4807770121326', 'lookup', 0, NULL, '2026-03-04 15:32:00'),
+(1779, 1, '4807770121326', 'lookup', 0, NULL, '2026-03-04 15:32:03'),
+(1780, 1, 'FRESH-001', 'lookup', 1, NULL, '2026-03-04 15:32:38'),
+(1781, 10, '4807770121326', 'lookup', 0, NULL, '2026-03-04 15:33:34'),
+(1782, 10, '4807770121326', 'lookup', 0, NULL, '2026-03-04 15:33:50');
 
 -- --------------------------------------------------------
 
@@ -1990,7 +1995,18 @@ CREATE TABLE `customer_inventory_updates` (
 --
 
 INSERT INTO `customer_inventory_updates` (`update_id`, `item_id`, `update_type`, `quantity_change`, `updated_by`, `update_date`, `notes`) VALUES
-(9, 3, 'added', 20.00, 1, '2026-03-04 13:54:06', 'Initial addition');
+(9, 3, 'added', 20.00, 1, '2026-03-04 13:54:06', 'Initial addition'),
+(10, 4, 'added', 20.00, 1, '2026-03-04 14:22:21', 'Initial addition'),
+(11, 10, 'consumed', 2.00, 1, '2026-03-04 15:19:57', ''),
+(15, 11, 'consumed', 70.00, 1, '2026-03-07 03:18:19', ''),
+(16, 11, 'consumed', 20.00, 1, '2026-03-07 03:18:33', ''),
+(17, 11, 'consumed', 10.00, 1, '2026-03-07 03:20:20', ''),
+(18, 11, 'expired', 100.00, 1, '2026-03-07 03:28:53', 'Auto-logged: Expired 1 day(s) ago'),
+(19, 11, 'consumed', 50.00, 1, '2026-03-07 03:37:11', ''),
+(20, 11, 'spoiled', 1.00, 1, '2026-03-07 04:23:45', ''),
+(21, 12, 'expired', 300.00, 1, '2026-03-09 12:42:24', 'Auto-logged: Expired 2 day(s) ago'),
+(22, 16, 'expired', 4.00, 1, '2026-03-09 12:42:24', 'Auto-logged: Expired 2 day(s) ago'),
+(23, 13, 'expired', 500.00, 1, '2026-03-09 12:42:24', 'Auto-logged: Expired 1 day(s) ago');
 
 -- --------------------------------------------------------
 
@@ -2022,7 +2038,22 @@ CREATE TABLE `customer_items` (
 --
 
 INSERT INTO `customer_items` (`item_id`, `item_name`, `barcode`, `catalog_id`, `category_id`, `group_id`, `quantity`, `unit`, `purchase_date`, `expiry_date`, `expiry_status`, `alert_flag`, `purchased_from`, `created_by`, `date_added`, `last_updated`) VALUES
-(3, 'Alaska Evaporada Milk', '4800024405014', 1, 1, 1, 20.00, 'can', '2026-03-04', '2027-03-04', 'fresh', 0, '0', 1, '2026-03-04 13:54:06', '2026-03-04 13:54:06');
+(3, 'Alaska Evaporada Milk', '4800024405014', 1, 1, 1, 20.00, 'can', '2026-03-04', '2027-03-04', 'fresh', 0, '0', 1, '2026-03-04 13:54:06', '2026-03-04 13:54:06'),
+(4, 'Monde Special Mamon', '', NULL, 7, 1, 20.00, 'pcs', '2026-03-04', '2027-06-28', 'fresh', 0, '0', 1, '2026-03-04 14:22:21', '2026-03-04 14:22:21'),
+(5, 'Alaska Condensed Milk', NULL, NULL, 1, 1, 5.00, 'pcs', '2026-03-01', '2027-03-01', 'fresh', 0, NULL, 1, '2026-03-04 15:01:13', '2026-03-04 15:01:13'),
+(6, 'CDO Corned Beef', NULL, NULL, 2, 1, 8.00, 'can', '2026-03-01', '2027-03-01', 'fresh', 0, NULL, 1, '2026-03-04 15:01:13', '2026-03-04 15:01:13'),
+(7, 'SkyFlakes Crackers', NULL, NULL, 7, 1, 15.00, 'pack', '2026-03-01', '2026-12-01', 'fresh', 0, NULL, 1, '2026-03-04 15:01:13', '2026-03-04 15:01:13'),
+(8, 'Alaska Condensed Milk', NULL, NULL, 1, 1, 5.00, 'pcs', '2026-03-01', '2027-03-01', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:02:05'),
+(9, 'CDO Corned Beef', NULL, NULL, 2, 1, 8.00, 'can', '2026-03-01', '2027-03-01', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:02:05'),
+(10, 'SkyFlakes Crackers', NULL, NULL, 7, 1, 13.00, 'pack', '2026-03-01', '2026-12-01', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:19:57'),
+(11, 'Cheese', NULL, NULL, 1, 1, 49.00, 'gram', '2026-03-01', '2026-03-06', 'expired', 1, NULL, 1, '2026-03-04 15:02:05', '2026-03-07 04:23:45'),
+(12, 'Yogurt', NULL, NULL, 1, 1, 300.00, 'gram', '2026-03-01', '2026-03-07', 'expired', 1, NULL, 1, '2026-03-04 15:02:05', '2026-03-09 12:42:24'),
+(13, 'Chicken Breast', NULL, NULL, 2, 1, 500.00, 'gram', '2026-03-01', '2026-03-08', 'expired', 1, NULL, 1, '2026-03-04 15:02:05', '2026-03-09 12:42:24'),
+(16, 'Tomatoes', NULL, NULL, 3, 1, 4.00, 'piece', '2026-03-01', '2026-03-07', 'expired', 1, NULL, 1, '2026-03-04 15:02:05', '2026-03-09 12:42:24'),
+(17, 'Onions', NULL, NULL, 3, 1, 3.00, 'piece', '2026-03-01', '2026-03-15', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:02:05'),
+(18, 'Frozen Berries', NULL, NULL, 4, 1, 250.00, 'gram', '2026-03-01', '2026-04-01', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:02:05'),
+(20, 'Pasta', NULL, NULL, 6, 1, 500.00, 'gram', '2026-03-01', '2026-05-01', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:02:05'),
+(21, 'Rice', NULL, NULL, 6, 1, 2.00, 'kg', '2026-03-01', '2026-06-01', 'fresh', 0, NULL, 1, '2026-03-04 15:02:05', '2026-03-04 15:02:05');
 
 --
 -- Triggers `customer_items`
@@ -2086,7 +2117,10 @@ CREATE TABLE `grocery_inventory_updates` (
 --
 
 INSERT INTO `grocery_inventory_updates` (`update_id`, `item_id`, `store_id`, `update_type`, `quantity_change`, `updated_by`, `update_date`, `notes`) VALUES
-(1, 1, 11, '', 100.00, 10, '2026-03-02 12:22:11', 'Received via PO PO-2026-000003');
+(1, 1, 11, '', 100.00, 10, '2026-03-02 12:22:11', 'Received via PO PO-2026-000003'),
+(4, 45, 11, '', 10.00, 10, '2026-03-07 05:37:16', 'Received via PO PO-2026-000005 — Different expiry date from existing stock'),
+(5, 45, 11, '', 10.00, 10, '2026-03-07 05:37:47', 'Received via PO PO-2026-000005 (merged with same expiry/batch)'),
+(6, 46, 11, 'added', 100.00, 10, '2026-03-07 05:55:55', 'Initial addition');
 
 -- --------------------------------------------------------
 
@@ -2134,10 +2168,12 @@ INSERT INTO `grocery_items` (`item_id`, `item_name`, `barcode`, `catalog_id`, `c
 (36, 'Datu Puti Soy Sauce', '4800361390026', 43, 6, 6, 43, NULL, 'BATCH-2026-044', '2026-03-03', 75.00, 'bottle', '2026-03-03', '2027-03-03', 'fresh', 0, 28.00, 38.00, 25.00, 70.00, 'SKU-DPS-004', 11, 11, '2026-03-04 12:23:19', '2026-03-04 12:23:19'),
 (37, 'Garlic', 'FRESH-003', 18, 3, 9, 67, NULL, 'FRESH-2026-030', '2026-03-03', 15.00, 'kg', '2026-03-03', '2026-03-24', 'fresh', 0, 120.00, 155.00, 5.00, 15.00, 'SKU-GAR-004', 11, 11, '2026-03-04 12:23:19', '2026-03-04 12:23:19'),
 (38, 'Magnolia Butter', '4800888110015', 6, 1, 4, 25, NULL, 'BATCH-2026-045', '2026-02-01', 18.00, 'pack', '2026-02-01', '2027-03-28', 'fresh', 0, 95.00, 125.00, 10.00, 30.00, 'SKU-MBU-004', 11, 11, '2026-03-04 12:23:19', '2026-03-04 13:37:34'),
-(39, 'Gardenia Wheat Bread', '4800361344029', 57, 7, 10, 76, NULL, 'BATCH-2026-046', '2026-02-25', 10.00, 'loaf', '2026-02-25', '2026-03-03', 'expired', 1, 62.00, 80.00, 15.00, 40.00, 'SKU-GWH-004', 11, 11, '2026-03-04 12:23:19', '2026-03-04 12:23:19'),
+(39, 'Gardenia Wheat Bread', '4800361344029', 57, 7, 10, 76, NULL, 'BATCH-2026-046', '2026-02-25', 50.00, 'loaf', '2026-02-25', '2027-06-17', 'fresh', 0, 62.00, 80.00, 15.00, 40.00, 'SKU-GWH-004', 11, 11, '2026-03-04 12:23:19', '2026-03-07 05:36:44'),
 (40, 'Test Expired Item', NULL, NULL, 7, NULL, NULL, NULL, NULL, NULL, 50.00, 'pcs', '2026-03-04', '0000-00-00', 'fresh', 0, 10.00, 15.00, 10.00, 50.00, '0', 0, 1, '2026-03-04 12:52:04', '2026-03-04 12:52:04'),
 (41, 'Test Near Expiry Item', NULL, NULL, 7, NULL, NULL, NULL, NULL, NULL, 30.00, 'pcs', '2026-03-04', '0000-00-00', 'fresh', 0, 20.00, 25.00, 10.00, 50.00, '0', 0, 1, '2026-03-04 12:52:04', '2026-03-04 12:52:04'),
-(42, 'Test Low Stock Item', NULL, NULL, 7, NULL, NULL, NULL, NULL, NULL, 5.00, 'pcs', '2026-03-04', '0000-00-00', 'fresh', 0, 15.00, 20.00, 20.00, 50.00, '0', 0, 1, '2026-03-04 12:52:04', '2026-03-04 12:52:04');
+(42, 'Test Low Stock Item', NULL, NULL, 7, NULL, NULL, NULL, NULL, NULL, 5.00, 'pcs', '2026-03-04', '0000-00-00', 'fresh', 0, 15.00, 20.00, 20.00, 50.00, '0', 0, 1, '2026-03-04 12:52:04', '2026-03-04 12:52:04'),
+(45, 'Gardenia Wheat Bread', '', 57, 7, 10, 76, 5, '', '2026-03-07', 20.00, 'pcs', '2026-03-07', '2028-03-07', 'fresh', 0, 62.00, 77.00, 10.00, 50.00, '0', 10, 11, '2026-03-07 05:37:16', '2026-03-07 05:37:47'),
+(46, 'Alaska Powdered Milk', '', NULL, 1, 3, 3, NULL, '', '2026-03-09', 100.00, '150g pack', '2026-03-07', '2028-03-07', 'fresh', 0, 125.00, 200.00, 10.00, 50.00, '0', 10, 11, '2026-03-07 05:55:55', '2026-03-07 05:55:55');
 
 --
 -- Triggers `grocery_items`
@@ -2209,7 +2245,9 @@ INSERT INTO `grocery_stores` (`store_id`, `store_name`, `business_address`, `con
 (1, 'Sample Grocery Store', '123 Main Street, Manila', '+63 912 345 6789', 'store@sample.com', NULL, 1, NULL, NULL, NULL, 1, '2026-01-25 07:42:04', '2026-01-25 07:42:04'),
 (5, 'try', 'trial', '09123456789', 'trytry@gmail.com', NULL, 1, NULL, NULL, NULL, 1, '2026-02-15 10:22:23', '2026-02-15 12:59:11'),
 (6, 'new', 'new', '09123456789', 'new@gmail.com', NULL, 1, NULL, NULL, NULL, 1, '2026-02-16 11:14:01', '2026-02-16 11:15:43'),
-(11, 'some', 'some', '09123456789', 'some@gmail.com', NULL, 1, NULL, NULL, NULL, 1, '2026-02-16 12:21:17', '2026-02-16 12:21:30');
+(11, 'some', 'some', '09123456789', 'some@gmail.com', NULL, 1, NULL, NULL, NULL, 1, '2026-02-16 12:21:17', '2026-02-16 12:21:30'),
+(12, 'wow store', 'wowowow', '09123456789', 'wow@gmail.com', NULL, 1, NULL, NULL, NULL, 1, '2026-03-04 15:05:56', '2026-03-04 15:06:50'),
+(13, 'another', 'ANO', '09123456789', 'ano@gmail.com', NULL, 0, 'e73c515a93902cd11b771254be98250cff97272dfcb7f99144cb308e21bacd63', '2026-03-05 16:08:07', NULL, 1, '2026-03-04 15:08:07', '2026-03-04 15:08:07');
 
 -- --------------------------------------------------------
 
@@ -2243,7 +2281,7 @@ CREATE TABLE `group_members` (
   `member_id` int(11) NOT NULL,
   `group_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `member_role` enum('parent','child','staff','member') DEFAULT 'member',
+  `member_role` enum('parent','child','staff','member','manager') DEFAULT 'member',
   `joined_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -2252,7 +2290,7 @@ CREATE TABLE `group_members` (
 --
 
 INSERT INTO `group_members` (`member_id`, `group_id`, `user_id`, `member_role`, `joined_at`) VALUES
-(1, 1, 1, 'child', '2026-01-25 03:07:45'),
+(1, 1, 1, 'parent', '2026-01-25 03:07:45'),
 (2, 1, 11, 'child', '2026-02-23 23:37:11');
 
 -- --------------------------------------------------------
@@ -2294,9 +2332,29 @@ INSERT INTO `notifications` (`notification_id`, `user_id`, `type`, `priority`, `
 (12, 1, 'expiry', 'medium', 'Expiring Soon: SkyFlakes', 'SkyFlakes expires in 4 day(s) on Feb 28, 2026.', 1, 'customer_item', 1, 1, '2026-02-24 12:18:41'),
 (13, 1, 'expiry', 'medium', 'Expiring Soon: SkyFlakes', 'SkyFlakes expires in 4 day(s) on Feb 28, 2026.', 1, 'customer_item', 1, 1, '2026-02-24 12:18:50'),
 (14, 1, 'expiry', 'medium', 'Expiring Soon: SkyFlakes', 'SkyFlakes expires in 4 day(s) on Feb 28, 2026.', 1, 'customer_item', 1, 1, '2026-02-24 12:18:57'),
-(15, 10, 'expiry', 'high', 'Expired: Gardenia Wheat Bread', 'Stock of Gardenia Wheat Bread (10.00 loaf) expired 1 day(s) ago. Category: Bakery.', 39, 'grocery_item', 0, 0, '2026-03-04 12:23:49'),
-(16, 10, 'expiry', 'medium', 'Expiring Soon: Magnolia Butter', 'Magnolia Butter (18.00 pack) expires in 6 day(s) on Mar 10, 2026. Category: Dairy.', 38, 'grocery_item', 1, 0, '2026-03-04 12:23:49'),
-(17, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Wheat Bread', 'Gardenia Wheat Bread is at 10.00 loaf (67% of reorder level 15.00). Consider reordering 40.00 loaf. Supplier: Local Bakery Supplies.', 39, 'grocery_item_stock', 0, 0, '2026-03-04 12:23:49');
+(15, 10, 'expiry', 'high', 'Expired: Gardenia Wheat Bread', 'Stock of Gardenia Wheat Bread (10.00 loaf) expired 1 day(s) ago. Category: Bakery.', 39, 'grocery_item', 1, 1, '2026-03-04 12:23:49'),
+(16, 10, 'expiry', 'medium', 'Expiring Soon: Magnolia Butter', 'Magnolia Butter (18.00 pack) expires in 6 day(s) on Mar 10, 2026. Category: Dairy.', 38, 'grocery_item', 1, 1, '2026-03-04 12:23:49'),
+(17, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Wheat Bread', 'Gardenia Wheat Bread is at 10.00 loaf (67% of reorder level 15.00). Consider reordering 40.00 loaf. Supplier: Local Bakery Supplies.', 39, 'grocery_item_stock', 1, 1, '2026-03-04 12:23:49'),
+(18, 1, 'expiry', 'high', 'Expiring Soon: Bananas', 'Bananas expires in 1 day(s) on Mar 5, 2026.', 19, 'customer_item', 1, 0, '2026-03-04 15:02:11'),
+(19, 1, 'expiry', 'high', 'Expiring Soon: Cheese', 'Cheese expires in 2 day(s) on Mar 6, 2026.', 11, 'customer_item', 0, 0, '2026-03-04 15:02:11'),
+(20, 1, 'expiry', 'high', 'Expiring Soon: Lettuce', 'Lettuce expires in 2 day(s) on Mar 6, 2026.', 15, 'customer_item', 0, 0, '2026-03-04 15:02:11'),
+(21, 1, 'expiry', 'medium', 'Expiring Soon: Yogurt', 'Yogurt expires in 3 day(s) on Mar 7, 2026.', 12, 'customer_item', 0, 0, '2026-03-04 15:02:11'),
+(22, 1, 'expiry', 'medium', 'Expiring Soon: Tomatoes', 'Tomatoes expires in 3 day(s) on Mar 7, 2026.', 16, 'customer_item', 0, 0, '2026-03-04 15:02:11'),
+(23, 1, 'expiry', 'medium', 'Expiring Soon: Chicken Breast', 'Chicken Breast expires in 4 day(s) on Mar 8, 2026.', 13, 'customer_item', 0, 0, '2026-03-04 15:02:11'),
+(24, 1, 'expiry', 'medium', 'Expiring Soon: Ground Beef', 'Ground Beef expires in 6 day(s) on Mar 10, 2026.', 14, 'customer_item', 0, 0, '2026-03-04 15:02:11'),
+(25, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Wheat Bread', 'Gardenia Wheat Bread is at 10.00 loaf (67% of reorder level 15.00). Consider reordering 40.00 loaf. Supplier: Local Bakery Supplies.', 39, 'grocery_item_stock', 1, 0, '2026-03-04 15:12:21'),
+(26, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Wheat Bread', 'Gardenia Wheat Bread is at 10.00 loaf (67% of reorder level 15.00). Consider reordering 40.00 loaf. Supplier: Local Bakery Supplies.', 39, 'grocery_item_stock', 1, 0, '2026-03-04 15:12:25'),
+(27, 1, 'achievement', 'medium', '🏆 Badge Unlocked: Newbie Organizer', 'Add 5 items to your inventory (25 pts required)', 1, 'badge', 1, 1, '2026-03-04 15:20:02'),
+(28, 1, 'system', 'low', '� Welcome to StockFlow!', 'Welcome Sample! Start tracking your inventory and never waste food again.', 1, 'welcome', 0, 1, '2026-03-07 04:30:17'),
+(29, 10, 'system', 'low', '� Welcome to StockFlow!', 'Welcome some! Start tracking your inventory and never waste food again.', 10, 'welcome', 1, 0, '2026-03-07 04:47:14'),
+(30, 4, 'system', 'low', '� Welcome to StockFlow!', 'Welcome try! Start tracking your inventory and never waste food again.', 4, 'welcome', 0, 0, '2026-03-07 05:27:28'),
+(31, 10, 'achievement', 'medium', '📋 Reorder Needed: Gardenia Wheat Bread', 'Gardenia Wheat Bread needs reordering. Current stock: 10.00 loaf. Suggested: 40.00 loaf from Local Bakery Supplies', 39, 'reorder_alert', 1, 0, '2026-03-07 05:29:45'),
+(32, 10, 'system', 'medium', '📦 Purchase Order Confirmed: PO-2026-000004', 'Purchase Order PO-2026-000004 is Confirmed with 1 items.', 4, 'purchase_order', 1, 0, '2026-03-07 05:29:45'),
+(33, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Pandesal', 'Gardenia Pandesal is at 10.00 pcs (100% of reorder level 10.00). Consider reordering 50.00 pcs. Supplier: Local Bakery Supplies.', 43, 'grocery_item_stock', 1, 1, '2026-03-07 05:30:26'),
+(34, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Pandesal', 'Gardenia Pandesal is at 10.00 pcs (100% of reorder level 10.00). Consider reordering 50.00 pcs. Supplier: Local Bakery Supplies.', 44, 'grocery_item_stock', 1, 1, '2026-03-07 05:30:57'),
+(35, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Wheat Bread', 'Gardenia Wheat Bread is at 10.00 loaf (67% of reorder level 15.00). Consider reordering 40.00 loaf. Supplier: Local Bakery Supplies.', 39, 'grocery_item_stock', 1, 1, '2026-03-07 05:33:13'),
+(36, 10, 'low_stock', 'medium', 'Low Stock: Gardenia Wheat Bread', 'Gardenia Wheat Bread is at 10.00 loaf (67% of reorder level 15.00). Consider reordering 40.00 loaf. Supplier: Local Bakery Supplies.', 39, 'grocery_item_stock', 1, 1, '2026-03-07 05:33:20'),
+(37, 10, 'system', 'medium', '📦 Purchase Order Confirmed: PO-2026-000005', 'Purchase Order PO-2026-000005 is Confirmed with 1 items.', 5, 'purchase_order', 1, 0, '2026-03-07 05:36:50');
 
 -- --------------------------------------------------------
 
@@ -2312,6 +2370,7 @@ CREATE TABLE `notification_preferences` (
   `low_stock_enabled` tinyint(1) DEFAULT 1,
   `achievement_enabled` tinyint(1) DEFAULT 1,
   `system_enabled` tinyint(1) DEFAULT 1,
+  `group_notifications_enabled` tinyint(1) DEFAULT 1,
   `email_enabled` tinyint(1) DEFAULT 0,
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -2320,8 +2379,10 @@ CREATE TABLE `notification_preferences` (
 -- Dumping data for table `notification_preferences`
 --
 
-INSERT INTO `notification_preferences` (`pref_id`, `user_id`, `expiry_enabled`, `expiry_days_before`, `low_stock_enabled`, `achievement_enabled`, `system_enabled`, `email_enabled`, `updated_at`) VALUES
-(1, 1, 1, 7, 1, 1, 1, 1, '2026-02-16 23:43:05');
+INSERT INTO `notification_preferences` (`pref_id`, `user_id`, `expiry_enabled`, `expiry_days_before`, `low_stock_enabled`, `achievement_enabled`, `system_enabled`, `group_notifications_enabled`, `email_enabled`, `updated_at`) VALUES
+(1, 1, 1, 7, 1, 1, 1, 0, 0, '2026-03-07 05:20:51'),
+(16, 999, 1, 7, 0, 1, 0, 1, 0, '2026-03-07 04:33:56'),
+(74, 10, 1, 7, 1, 1, 1, 0, 0, '2026-03-07 05:21:31');
 
 -- --------------------------------------------------------
 
@@ -2349,7 +2410,21 @@ INSERT INTO `points_log` (`log_id`, `user_id`, `action_type`, `points_earned`, `
 (4, 1, 'CONSUME_ITEM', 3, 1, '2026-03-04 13:46:46'),
 (5, 1, 'CONSUME_ITEM', 3, 1, '2026-03-04 13:47:41'),
 (6, 1, 'CONSUME_ITEM', 3, 1, '2026-03-04 13:48:48'),
-(7, 1, 'ADD_ITEM', 5, 3, '2026-03-04 13:54:06');
+(7, 1, 'ADD_ITEM', 5, 3, '2026-03-04 13:54:06'),
+(8, 1, 'ADD_ITEM', 5, 4, '2026-03-04 14:22:21'),
+(9, 1, 'CONSUME_ITEM', 3, 10, '2026-03-04 15:19:57'),
+(10, 1, 'CONSUME_ITEM', 3, 19, '2026-03-07 03:07:17'),
+(11, 1, 'CONSUME_ITEM', 3, 15, '2026-03-07 03:09:56'),
+(12, 1, 'CONSUME_ITEM', 3, 14, '2026-03-07 03:14:23'),
+(13, 1, 'CONSUME_ITEM', 3, 11, '2026-03-07 03:18:19'),
+(14, 1, 'CONSUME_ITEM', 3, 11, '2026-03-07 03:18:33'),
+(15, 1, 'CONSUME_ITEM', 3, 11, '2026-03-07 03:20:20'),
+(16, 1, '', 1, 11, '2026-03-07 03:28:53'),
+(17, 1, 'CONSUME_ITEM', 3, 11, '2026-03-07 03:37:11'),
+(18, 1, '', 1, 11, '2026-03-07 04:23:45'),
+(19, 1, '', 1, 12, '2026-03-09 12:42:24'),
+(20, 1, '', 1, 16, '2026-03-09 12:42:24'),
+(21, 1, '', 1, 13, '2026-03-09 12:42:24');
 
 -- --------------------------------------------------------
 
@@ -2481,7 +2556,9 @@ CREATE TABLE `purchase_orders` (
 INSERT INTO `purchase_orders` (`po_id`, `po_number`, `store_id`, `supplier_id`, `order_date`, `expected_delivery_date`, `actual_delivery_date`, `status`, `total_amount`, `tax_amount`, `discount_amount`, `grand_total`, `payment_status`, `payment_terms`, `created_by`, `notes`, `created_at`, `updated_at`) VALUES
 (1, 'PO-2026-000001', 1, 1, '2026-03-02', '2026-03-09', NULL, 'draft', 0.00, 0.00, 0.00, 0.00, 'unpaid', NULL, 1, 'Test purchase order for workflow validation', '2026-03-02 11:21:19', '2026-03-02 11:21:19'),
 (2, 'PO-2026-000002', 1, 1, '2026-03-02', '2026-03-09', NULL, 'draft', 0.00, 0.00, 0.00, 0.00, 'unpaid', NULL, 1, 'Test valid PO', '2026-03-02 11:25:06', '2026-03-02 11:25:06'),
-(3, 'PO-2026-000003', 11, 3, '2026-03-02', '0000-00-00', '2026-03-02', 'received', 4800.00, 0.00, 0.00, 4800.00, 'unpaid', 'COD', 10, '', '2026-03-02 12:00:58', '2026-03-02 12:22:11');
+(3, 'PO-2026-000003', 11, 3, '2026-03-02', '0000-00-00', '2026-03-02', 'received', 4800.00, 0.00, 0.00, 4800.00, 'paid', 'COD', 10, '', '2026-03-02 12:00:58', '2026-03-07 05:21:42'),
+(4, 'PO-2026-000004', 11, 10, '2026-03-07', '0000-00-00', '2026-03-07', 'received', 840.00, 0.00, 0.00, 840.00, 'partially_paid', 'Net 7', 10, '', '2026-03-07 05:22:17', '2026-03-07 05:30:55'),
+(5, 'PO-2026-000005', 11, 10, '2026-03-07', '0000-00-00', '2026-03-07', 'received', 1240.00, 0.00, 0.00, 1240.00, 'unpaid', 'Net 7', 10, '', '2026-03-07 05:33:55', '2026-03-07 05:37:47');
 
 --
 -- Triggers `purchase_orders`
@@ -2553,7 +2630,9 @@ CREATE TABLE `purchase_order_items` (
 --
 
 INSERT INTO `purchase_order_items` (`po_item_id`, `po_id`, `supplier_product_id`, `product_name`, `quantity_ordered`, `quantity_received`, `unit_price`, `expiry_date`, `notes`, `created_at`) VALUES
-(1, 3, 2, 'Alaska Condensed Milk', 100.00, 100.00, 48.00, '2027-11-26', '', '2026-03-02 12:09:25');
+(1, 3, 2, 'Alaska Condensed Milk', 100.00, 100.00, 48.00, '2027-11-26', '', '2026-03-02 12:09:25'),
+(2, 4, 77, 'Gardenia Pandesal', 20.00, 20.00, 42.00, '2028-08-11', '', '2026-03-07 05:22:28'),
+(3, 5, 76, 'Gardenia Wheat Bread', 20.00, 20.00, 62.00, '2028-03-07', '', '2026-03-07 05:34:06');
 
 -- --------------------------------------------------------
 
@@ -2577,6 +2656,17 @@ CREATE TABLE `shopping_list_items` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `shopping_list_items`
+--
+
+INSERT INTO `shopping_list_items` (`list_item_id`, `user_id`, `item_name`, `quantity`, `unit`, `category_id`, `is_purchased`, `is_auto_generated`, `source_item_id`, `priority`, `notes`, `created_at`, `updated_at`) VALUES
+(28, 1, 'Rice', 2.00, 'kg', 6, 0, 1, 21, 'high', NULL, '2026-03-07 03:05:34', '2026-03-07 03:05:34'),
+(29, 1, 'Yogurt', 300.00, 'gram', 1, 0, 1, 12, 'medium', 'Expiring in 0 day(s) - replacement', '2026-03-07 03:05:34', '2026-03-07 03:05:34'),
+(30, 1, 'Tomatoes', 4.00, 'piece', 3, 0, 1, 16, 'medium', 'Expiring in 0 day(s) - replacement', '2026-03-07 03:05:34', '2026-03-07 03:05:34'),
+(31, 1, 'Chicken Breast', 500.00, 'gram', 2, 0, 1, 13, 'medium', 'Expiring in 1 day(s) - replacement', '2026-03-07 03:05:34', '2026-03-07 03:05:34'),
+(32, 1, 'Ground Beef', 400.00, 'gram', 2, 0, 1, NULL, 'medium', 'Expiring in 3 day(s) - replacement', '2026-03-07 03:05:34', '2026-03-07 03:05:34');
+
 -- --------------------------------------------------------
 
 --
@@ -2593,6 +2683,13 @@ CREATE TABLE `shopping_list_settings` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `shopping_list_settings`
+--
+
+INSERT INTO `shopping_list_settings` (`setting_id`, `user_id`, `auto_add_low_stock`, `low_stock_threshold`, `auto_add_expiring`, `expiring_days`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 2.00, 1, 3, '2026-03-04 15:02:05', '2026-03-04 15:02:05');
 
 -- --------------------------------------------------------
 
@@ -2620,7 +2717,13 @@ INSERT INTO `store_email_logs` (`log_id`, `store_id`, `recipient_email`, `subjec
 (4, 6, 'new@gmail.com', 'Welcome to StockFlow - Please Verify Your Email', '2026-02-16 19:14:08', 'production_failed'),
 (14, 11, 'some@gmail.com', 'Welcome to StockFlow — Please Verify Your Email', '2026-02-16 20:21:20', 'mailtrap_sent'),
 (15, 11, 'some@gmail.com', 'Welcome to StockFlow — Please Verify Your Email', '2026-02-16 20:21:20', 'production_not_configured'),
-(16, 11, 'some@gmail.com', 'Email Verified — Welcome to StockFlow', '2026-02-16 20:21:33', 'mailtrap_sent');
+(16, 11, 'some@gmail.com', 'Email Verified — Welcome to StockFlow', '2026-02-16 20:21:33', 'mailtrap_sent'),
+(17, 12, 'wow@gmail.com', 'Welcome to StockFlow — Please Verify Your Email', '2026-03-04 23:05:59', 'mailtrap_sent'),
+(18, 12, 'wow@gmail.com', 'Welcome to StockFlow — Please Verify Your Email', '2026-03-04 23:05:59', 'production_not_configured'),
+(19, 12, 'wow@gmail.com', 'Email Verified — Welcome to StockFlow', '2026-03-04 23:06:53', 'mailtrap_sent'),
+(20, 12, 'wow@gmail.com', 'Email Verified — Welcome to StockFlow', '2026-03-04 23:06:53', 'production_not_configured'),
+(21, 13, 'another@gmail.com', 'Welcome to StockFlow — Please Verify Your Email', '2026-03-04 23:08:10', 'mailtrap_sent'),
+(22, 13, 'another@gmail.com', 'Welcome to StockFlow — Please Verify Your Email', '2026-03-04 23:08:10', 'production_not_configured');
 
 -- --------------------------------------------------------
 
@@ -2649,7 +2752,7 @@ CREATE TABLE `store_suppliers` (
 INSERT INTO `store_suppliers` (`store_supplier_id`, `store_id`, `supplier_id`, `is_active`, `preferred_supplier`, `credit_limit`, `current_balance`, `last_order_date`, `notes`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, 1, 1, 50000.00, 0.00, NULL, 'Test relationship for workflow validation', '2026-03-02 11:21:19', '2026-03-02 11:21:19'),
 (2, 11, 3, 1, 1, NULL, 0.00, '2026-03-02', '', '2026-03-02 11:51:21', '2026-03-02 12:00:58'),
-(3, 11, 10, 1, 0, NULL, 0.00, NULL, '', '2026-03-04 12:33:25', '2026-03-04 12:33:25');
+(3, 11, 10, 1, 0, NULL, 0.00, '2026-03-07', '', '2026-03-04 12:33:25', '2026-03-07 05:22:17');
 
 -- --------------------------------------------------------
 
@@ -2832,11 +2935,13 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`user_id`, `full_name`, `email`, `password`, `img_name`, `is_active`, `last_login`, `role`, `store_id`, `created_at`, `updated_at`) VALUES
 (0, 'Admin Name', 'admin@store.com', '$2y$10$WNC4cFXciSjhHG4NLk/43e0DggwSj9IAgBBToqw9mkzDX52.6qPl6', NULL, 1, '2026-02-09 12:50:21', 'grocery_admin', 1, '2026-01-25 07:44:30', '2026-02-09 12:50:21'),
-(1, 'Sample', 'sample@gmail.com', '$2y$10$WNC4cFXciSjhHG4NLk/43e0DggwSj9IAgBBToqw9mkzDX52.6qPl6', 'user_1_1769317418.png', 1, '2026-03-04 13:39:57', 'customer', NULL, '2026-01-25 01:19:59', '2026-03-04 13:39:57'),
+(1, 'Sample', 'sample@gmail.com', '$2y$10$WNC4cFXciSjhHG4NLk/43e0DggwSj9IAgBBToqw9mkzDX52.6qPl6', 'user_1_1769317418.png', 1, '2026-03-10 11:07:14', 'customer', NULL, '2026-01-25 01:19:59', '2026-03-10 11:07:14'),
 (4, 'try', 'trytry@gmail.com', '$2y$10$NwXElVakK59dTx0Sv7m6SOvYLcVUNfZDCO7xzJz8K5.TypJGn./uO', 'nopfp.jpg', 1, '2026-03-01 15:14:56', 'grocery_admin', 5, '2026-02-15 10:22:23', '2026-03-01 15:14:56'),
 (5, 'new', 'new@gmail.com', '$2y$10$SpQQ97McKc5m2A0xUaPSwum7nlDn119ruQNOKkDYAw81xKBAdb/lG', 'nopfp.jpg', 1, '2026-02-16 11:21:55', 'grocery_admin', 6, '2026-02-16 11:14:01', '2026-02-16 11:21:55'),
-(10, 'some', 'some@gmail.com', '$2y$10$.OeCaIcizIB.fxtAbhflZ.Re4nDJbB6k7NnxF13JsstqO3f./gn3u', 'user_10_1772631528.png', 1, '2026-03-04 12:29:28', 'grocery_admin', 11, '2026-02-16 12:21:17', '2026-03-04 13:38:48'),
-(11, 'hehe', 'hehe@gmail.com', '$2y$10$u85usB//vio3XurQibJQEOXFZ5KAf088fFrg.XV8d.vCztxBRmRom', 'user_11_1771889831.png', 1, '2026-03-01 15:10:18', 'customer', NULL, '2026-02-23 23:37:11', '2026-03-01 15:10:18');
+(10, 'some', 'some@gmail.com', '$2y$10$.OeCaIcizIB.fxtAbhflZ.Re4nDJbB6k7NnxF13JsstqO3f./gn3u', 'user_10_1772631528.png', 1, '2026-03-10 11:00:48', 'grocery_admin', 11, '2026-02-16 12:21:17', '2026-03-10 11:00:48'),
+(11, 'hehe', 'hehe@gmail.com', '$2y$10$u85usB//vio3XurQibJQEOXFZ5KAf088fFrg.XV8d.vCztxBRmRom', 'user_11_1771889831.png', 1, '2026-03-01 15:10:18', 'customer', NULL, '2026-02-23 23:37:11', '2026-03-01 15:10:18'),
+(12, 'wowow', 'wow@gmail.com', '$2y$10$SeQaIrFiRQ0etTruBkk4XurSciMlwH9XZ7RcoEn/ida28fRNODZ7q', 'nopfp.jpg', 1, '2026-03-04 15:07:14', 'grocery_admin', 12, '2026-03-04 15:05:56', '2026-03-04 15:07:14'),
+(13, 'another', 'another@gmail.com', '$2y$10$OLlqSVaRZOxreD2rqR0rLO69YbrqIpfaGgETsagwOUE5gFOBwqw/S', 'nopfp.jpg', 1, NULL, 'grocery_admin', 13, '2026-03-04 15:08:07', '2026-03-04 15:08:07');
 
 -- --------------------------------------------------------
 
@@ -2850,6 +2955,13 @@ CREATE TABLE `user_badges` (
   `badge_id` int(11) NOT NULL,
   `unlocked_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_badges`
+--
+
+INSERT INTO `user_badges` (`user_badge_id`, `user_id`, `badge_id`, `unlocked_at`) VALUES
+(1, 1, 1, '2026-03-04 15:19:57');
 
 -- --------------------------------------------------------
 
@@ -2868,7 +2980,7 @@ CREATE TABLE `user_points` (
 --
 
 INSERT INTO `user_points` (`user_id`, `total_points`, `last_updated`) VALUES
-(1, 25, '2026-03-04 13:54:06');
+(1, 59, '2026-03-09 12:42:24');
 
 -- --------------------------------------------------------
 
@@ -3299,7 +3411,7 @@ ALTER TABLE `badges`
 -- AUTO_INCREMENT for table `barcode_scan_history`
 --
 ALTER TABLE `barcode_scan_history`
-  MODIFY `scan_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1778;
+  MODIFY `scan_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1783;
 
 --
 -- AUTO_INCREMENT for table `categories`
@@ -3311,61 +3423,61 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `customer_inventory_updates`
 --
 ALTER TABLE `customer_inventory_updates`
-  MODIFY `update_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `update_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `customer_items`
 --
 ALTER TABLE `customer_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `grocery_inventory_updates`
 --
 ALTER TABLE `grocery_inventory_updates`
-  MODIFY `update_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `update_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `grocery_items`
 --
 ALTER TABLE `grocery_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `grocery_stores`
 --
 ALTER TABLE `grocery_stores`
-  MODIFY `store_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `store_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `groups`
 --
 ALTER TABLE `groups`
-  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `group_members`
 --
 ALTER TABLE `group_members`
-  MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `member_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `notification_preferences`
 --
 ALTER TABLE `notification_preferences`
-  MODIFY `pref_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `pref_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
 
 --
 -- AUTO_INCREMENT for table `points_log`
 --
 ALTER TABLE `points_log`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `product_catalog`
@@ -3377,31 +3489,31 @@ ALTER TABLE `product_catalog`
 -- AUTO_INCREMENT for table `purchase_orders`
 --
 ALTER TABLE `purchase_orders`
-  MODIFY `po_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `po_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `purchase_order_items`
 --
 ALTER TABLE `purchase_order_items`
-  MODIFY `po_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `po_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `shopping_list_items`
 --
 ALTER TABLE `shopping_list_items`
-  MODIFY `list_item_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `list_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `shopping_list_settings`
 --
 ALTER TABLE `shopping_list_settings`
-  MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `store_email_logs`
 --
 ALTER TABLE `store_email_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `store_suppliers`
@@ -3425,13 +3537,13 @@ ALTER TABLE `supplier_products`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `user_badges`
 --
 ALTER TABLE `user_badges`
-  MODIFY `user_badge_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `user_badge_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
