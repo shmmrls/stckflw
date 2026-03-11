@@ -7,20 +7,94 @@ requireLogin();
 $conn = getDBConnection();
 $user_id = getCurrentUserId();
 
-// Get user level
-$level_info = getUserLevel($conn, $user_id);
+// Get user level with group context
+$level_info = getUserLevelWithGroup($conn, $user_id);
+$user_group_type = $level_info['group_type'];
 
-// Get user's earned badges
+// Get all groups the user belongs to
+$user_groups_query = $conn->prepare("
+    SELECT g.group_id, g.group_name, g.group_type, gm.member_role
+    FROM groups g
+    JOIN group_members gm ON g.group_id = gm.group_id
+    WHERE gm.user_id = ?
+    ORDER BY g.group_name
+");
+$user_groups_query->bind_param("i", $user_id);
+$user_groups_query->execute();
+$user_groups = $user_groups_query->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Get user's earned badges globally
 $earned_badges_result = getUserBadges($conn, $user_id);
+$earned_badges = [];
 $earned_badge_ids = [];
 while ($badge = $earned_badges_result->fetch_assoc()) {
+    $earned_badges[] = $badge;
     $earned_badge_ids[] = $badge['badge_id'];
+}
+
+// Calculate total possible badges based on user's groups
+$total_possible_badges = 0;
+foreach ($user_groups as $group) {
+    $group_type = $group['group_type'];
+    // Each group type has 5 possible badges
+    $total_possible_badges += 5;
+}
+
+// Calculate total earned badges across all groups (per-group logic)
+$total_earned_badges = 0;
+foreach ($user_groups as $group) {
+    $group_id = $group['group_id'];
+    $group_type = $group['group_type'];
+    
+    // Get stats for this specific group
+    $group_stats_stmt = $conn->prepare("
+        SELECT 
+            COUNT(DISTINCT ci.item_id) as total_items_added,
+            SUM(CASE WHEN ciu.update_type = 'consumed' THEN 1 ELSE 0 END) as total_consumed,
+            (SELECT total_points FROM user_points WHERE user_id = ?) as total_points
+        FROM customer_items ci
+        LEFT JOIN customer_inventory_updates ciu ON ci.item_id = ciu.item_id
+        WHERE ci.created_by = ? AND ci.group_id = ?
+    ");
+    $group_stats_stmt->bind_param("iii", $user_id, $user_id, $group_id);
+    $group_stats_stmt->execute();
+    $group_stats = $group_stats_stmt->get_result()->fetch_assoc();
+    $group_stats_stmt->close();
+    
+    // Count earned badges for this group
+    $group_earned_count = 0;
+    
+    switch ($group_type) {
+        case 'household':
+            if (($group_stats['total_items_added'] ?? 0) >= 5) $group_earned_count++;
+            if (($group_stats['total_consumed'] ?? 0) >= 15) $group_earned_count++;
+            if (($group_stats['total_points'] ?? 0) >= 150) $group_earned_count++;
+            if (($group_stats['total_consumed'] ?? 0) >= 8) $group_earned_count++;
+            if (($group_stats['total_points'] ?? 0) >= 300) $group_earned_count++;
+            break;
+        case 'co_living':
+            if (($group_stats['total_items_added'] ?? 0) >= 3) $group_earned_count++;
+            if (($group_stats['total_consumed'] ?? 0) >= 25) $group_earned_count++;
+            if (($group_stats['total_points'] ?? 0) >= 200) $group_earned_count++;
+            if (($group_stats['total_consumed'] ?? 0) >= 12) $group_earned_count++;
+            if (($group_stats['total_points'] ?? 0) >= 400) $group_earned_count++;
+            break;
+        case 'small_business':
+            if (($group_stats['total_items_added'] ?? 0) >= 10) $group_earned_count++;
+            if (($group_stats['total_consumed'] ?? 0) >= 30) $group_earned_count++;
+            if (($group_stats['total_points'] ?? 0) >= 250) $group_earned_count++;
+            if (($group_stats['total_consumed'] ?? 0) >= 15) $group_earned_count++;
+            if (($group_stats['total_points'] ?? 0) >= 500) $group_earned_count++;
+            break;
+    }
+    
+    $total_earned_badges += $group_earned_count;
 }
 
 // Get all available badges
 $all_badges_result = getAllBadges($conn);
 
-$pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/badges.css">';
+$pageCss = '<link rel="stylesheet" href="' . htmlspecialchars($baseUrl) . '/includes/style/pages/rewards.css">';
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
@@ -50,7 +124,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="level-icon"><?php echo getLevelIcon($level_info['level']); ?></div>
                     <div class="level-info">
                         <h2 class="level-name">
-                            <?php echo getLevelName($level_info['level']); ?>
+                            <?php echo getLevelName($level_info['level'], $user_group_type); ?>
                         </h2>
                         <p class="level-number">Level <?php echo $level_info['level']; ?> of 10</p>
                     </div>
@@ -90,11 +164,11 @@ require_once __DIR__ . '/../includes/header.php';
                         <p class="stat-label">Total Points</p>
                     </div>
                     <div class="stat">
-                        <p class="stat-value"><?php echo count($earned_badge_ids); ?></p>
+                        <p class="stat-value"><?php echo $total_earned_badges; ?></p>
                         <p class="stat-label">Badges Earned</p>
                     </div>
                     <div class="stat">
-                        <p class="stat-value"><?php echo (5 - count($earned_badge_ids)); ?></p>
+                        <p class="stat-value"><?php echo ($total_possible_badges - $total_earned_badges); ?></p>
                         <p class="stat-label">Badges Left</p>
                     </div>
                 </div>

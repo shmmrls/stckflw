@@ -1,164 +1,460 @@
-/* Badges & Levels Page Styles - Luxury Minimalist Design */
+/* ============================================================
+   Badges & Levels — Luxury Minimalist (multi-group version)
+   ============================================================ */
 
+/* Reset */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Montserrat', sans-serif; background: #ffffff; color: #1a1a1a; line-height: 1.6; }
 
-/* Page Layout */
-.badges-page { min-height: 100vh; padding: 100px 30px 60px; background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%); }
-.page-container { max-width: 1200px; margin: 0 auto; }
-
-/* Page Header */
-.page-header { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); padding: 40px; margin-bottom: 30px; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
-.page-header:hover { border-color: rgba(0,0,0,0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-
-.header-content { flex: 1; }
-h1.page-title { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 400; margin: 0; color: #0a0a0a; }
-.page-subtitle { font-size: 13px; color: rgba(0,0,0,0.5); letter-spacing: 0.3px; margin: 8px 0 0 0; }
-
-/* Buttons */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; transition: all 0.3s ease; border: none; cursor: pointer; font-family: 'Montserrat', sans-serif; line-height: 1.2; }
-.btn svg { flex-shrink: 0; display: block; }
-
-.btn-secondary { background: #ffffff; color: rgba(0,0,0,0.7); border: 1px solid rgba(0,0,0,0.15); }
-.btn-secondary:hover { background: #fafafa; border-color: rgba(0,0,0,0.25); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-
-/* Level Section */
-.level-section { margin-bottom: 30px; }
-
-.level-card { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); padding: 50px; transition: all 0.3s ease; }
-.level-card:hover { border-color: rgba(0,0,0,0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-
-.level-display { display: flex; align-items: center; gap: 40px; margin-bottom: 50px; }
-
-.level-icon { font-size: 80px; line-height: 1; animation: float 3s ease-in-out infinite; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: #ffffff;
+    color: #1a1a1a;
+    line-height: 1.6;
 }
 
-.level-info { flex: 1; }
-
-.level-name { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 400; color: #0a0a0a; margin: 0 0 8px 0; }
-
-.level-number { font-size: 13px; color: rgba(0,0,0,0.5); letter-spacing: 0.5px; text-transform: uppercase; margin: 0; font-weight: 500; }
-
-/* Progress Section */
-.progress-section { margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(0,0,0,0.06); }
-
-.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-
-.progress-label { font-size: 10px; font-weight: 600; color: rgba(0,0,0,0.6); text-transform: uppercase; letter-spacing: 1px; }
-
-.progress-text { font-size: 11px; color: rgba(0,0,0,0.5); letter-spacing: 0.3px; }
-
-.progress-bar { width: 100%; height: 8px; background: #fafafa; border: 1px solid rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 12px; }
-
-.progress-fill { height: 100%; background: #0a0a0a; transition: width 0.6s ease; }
-
-.progress-footer { text-align: right; font-size: 11px; color: rgba(0,0,0,0.5); letter-spacing: 0.3px; }
-
-.max-level { color: #0a0a0a; font-weight: 600; }
-
-/* Level Stats */
-.level-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
-
-.stat { text-align: center; padding: 25px; background: #fafafa; border: 1px solid rgba(0,0,0,0.06); transition: all 0.3s ease; }
-.stat:hover { background: #ffffff; border-color: rgba(0,0,0,0.1); transform: translateY(-2px); }
-
-.stat-value { margin: 0; font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 400; color: #0a0a0a; }
-
-.stat-label { margin: 8px 0 0 0; font-size: 10px; color: rgba(0,0,0,0.5); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
-
-/* Badges Section */
-.badges-section { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); padding: 50px; margin-bottom: 30px; transition: all 0.3s ease; }
-.badges-section:hover { border-color: rgba(0,0,0,0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-
-.section-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; color: #0a0a0a; margin: 0 0 8px 0; }
-
-.section-subtitle { color: rgba(0,0,0,0.5); margin: 0 0 40px 0; font-size: 13px; letter-spacing: 0.3px; }
-
-.badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
-
-.badge-card { border: 1px solid rgba(0,0,0,0.08); padding: 35px; text-align: center; transition: all 0.3s ease; display: flex; flex-direction: column; justify-content: center; min-height: 320px; background: #fafafa; }
-
-.badge-card.earned { background: #ffffff; border-color: rgba(0,0,0,0.15); box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-
-.badge-card.earned:hover { border-color: rgba(0,0,0,0.2); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-
-.badge-card.locked { background: #fafafa; border-color: rgba(0,0,0,0.06); opacity: 0.6; }
-
-.badge-card.locked:hover { border-color: rgba(0,0,0,0.1); opacity: 0.8; }
-
-.badge-icon-container { margin-bottom: 20px; display: flex; justify-content: center; }
-
-.badge-icon { font-size: 56px; line-height: 1; }
-
-.badge-card.earned .badge-icon { animation: bounce 0.6s ease-in-out; }
-
-@keyframes bounce {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+/* ── Page layout ─────────────────────────────────────────── */
+.badges-page {
+    min-height: 100vh;
+    padding: 100px 30px 60px;
+    background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
 }
 
-.badge-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
-.badge-name { margin: 0 0 12px 0; font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 400; color: #0a0a0a; }
+/* ── Page header ─────────────────────────────────────────── */
+.page-header {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,.08);
+    padding: 40px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    transition: all .3s ease;
+    position: relative;
+}
+.page-header:hover {
+    border-color: rgba(0,0,0,.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,.05);
+}
 
-.badge-description { margin: 0 0 15px 0; font-size: 12px; color: rgba(0,0,0,0.6); line-height: 1.5; letter-spacing: 0.2px; }
+.header-content {
+    text-align: center;
+}
 
-.badge-requirement { margin: 0; font-size: 10px; color: rgba(0,0,0,0.4); text-transform: uppercase; font-weight: 500; letter-spacing: 0.5px; }
+.header-actions {
+    display: flex;
+    align-items: center;
+}
 
-.badge-status { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.06); }
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 1px solid rgba(0,0,0,.15);
+    background: #fafafa;
+    color: rgba(0,0,0,.7);
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    transition: all .3s ease;
+    border-radius: 4px;
+}
+.back-btn:hover {
+    background: #7ed957;
+    color: #0a0a0a;
+    border-color: #7ed957;
+    transform: translateY(-1px);
+}
+.back-btn__icon svg {
+    width: 14px;
+    height: 14px;
+}
 
-.badge-earned { display: inline-block; background: #0a0a0a; color: #ffffff; padding: 6px 14px; font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin-bottom: 8px;
+}
 
-.badge-locked { display: inline-block; background: rgba(0,0,0,0.1); color: rgba(0,0,0,0.5); padding: 6px 14px; font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.page-subtitle {
+    font-size: 13px;
+    color: rgba(0,0,0,.5);
+    letter-spacing: .3px;
+}
 
-/* Tips Section */
-.tips-section { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); padding: 50px; transition: all 0.3s ease; }
-.tips-section:hover { border-color: rgba(0,0,0,0.12); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+/* ── Stats overview ──────────────────────────────────────── */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
 
-.tips-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+.stat-card {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,.08);
+    padding: 25px;
+    text-align: center;
+    transition: all .3s ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,0,0,.12);
+    box-shadow: 0 8px 25px rgba(0,0,0,.05);
+}
 
-.tip-card { background: #fafafa; border: 1px solid rgba(0,0,0,0.06); padding: 30px; text-align: center; transition: all 0.3s ease; }
+.stat-card .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin-bottom: 8px;
+}
 
-.tip-card:hover { background: #ffffff; border-color: rgba(0,0,0,0.12); transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.05); }
+.stat-card .stat-label {
+    font-size: 10px;
+    color: rgba(0,0,0,.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
 
-.tip-icon { font-size: 36px; margin-bottom: 15px; display: block; opacity: 0.4; }
+/* ── Group selector / tabs ───────────────────────────────── */
+.group-selector {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,.08);
+    padding: 25px 30px;
+    margin-bottom: 30px;
+}
 
-.tip-content h4 { margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #0a0a0a; letter-spacing: 0.3px; }
+.group-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 
-.tip-content p { margin: 0; font-size: 12px; color: rgba(0,0,0,0.6); line-height: 1.6; letter-spacing: 0.2px; }
+.group-tab {
+    padding: 10px 22px;
+    border: 1px solid rgba(0,0,0,.15);
+    background: #fafafa;
+    color: rgba(0,0,0,.6);
+    cursor: pointer;
+    transition: all .3s ease;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+.group-tab.active {
+    background: #7ed957;
+    color: #0a0a0a;
+    border-color: #7ed957;
+}
+.group-tab:hover:not(.active) {
+    border-color: rgba(0,0,0,.25);
+    background: #f0f0f0;
+    color: rgba(0,0,0,.8);
+}
 
-/* Responsive Design */
+.group-tab-type {
+    margin-left: 4px;
+    opacity: .6;
+}
+
+/* ── Group content (show/hide) ───────────────────────────── */
+.group-content { display: none; }
+.group-content.active { display: block; }
+
+/* ── Badges section card ─────────────────────────────────── */
+.badges-section {
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,.08);
+    padding: 50px;
+    margin-bottom: 30px;
+    transition: all .3s ease;
+}
+.badges-section:hover {
+    border-color: rgba(0,0,0,.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,.05);
+}
+
+/* ── Group header inside section ─────────────────────────── */
+.group-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.group-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.group-type-badge {
+    display: inline-block;
+    background: #7ed957;
+    color: #0a0a0a;
+    padding: 4px 12px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* ── Subsection headings ─────────────────────────────────── */
+.subsection-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+.subsection-title--earned   { color: rgba(0,0,0,.7); }
+.subsection-title--available { color: rgba(0,0,0,.4); margin-top: 40px; }
+
+/* ── Badge grid ──────────────────────────────────────────── */
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+.badges-grid--earned {
+    margin-bottom: 40px;
+}
+
+/* ── Badge card ──────────────────────────────────────────── */
+.badge-card {
+    border: 1px solid rgba(0,0,0,.08);
+    padding: 30px;
+    position: relative;
+    transition: all .3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #fafafa;
+}
+
+.badge-card--earned {
+    background: #ffffff;
+    border-color: rgba(126,217,87,.5);
+    box-shadow: 0 5px 20px rgba(126,217,87,.12);
+}
+.badge-card--earned:hover {
+    border-color: rgba(0,0,0,.2);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(126,217,87,.18);
+}
+
+.badge-card--locked {
+    opacity: .6;
+}
+.badge-card--locked:hover {
+    opacity: .85;
+    border-color: rgba(0,0,0,.1);
+    transform: translateY(-2px);
+}
+
+/* ── Global SVG defaults ─────────────────────────────────── */
+svg { display: block; flex-shrink: 0; }
+
+/* ── Badge status pill ───────────────────────────────────── */
+.badge-status {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 4px 10px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 10;
+}
+.badge-status--earned { background: #7ed957; color: #0a0a0a; }
+.badge-status--locked { background: rgba(0,0,0,.1); color: rgba(0,0,0,.5); }
+.badge-status__icon svg { width: 10px; height: 10px; }
+
+/* ── Badge inner layout ──────────────────────────────────── */
+.badge-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding-right: 80px;
+}
+
+.badge-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    color: rgba(0,0,0,.45);
+    flex-shrink: 0;
+}
+.badge-icon svg { width: 26px; height: 26px; }
+.badge-icon--earned { background: #7ed957; color: #0a0a0a; }
+
+/* ── Subsection title icon ───────────────────────────────── */
+.subsection-title { display: flex; align-items: center; gap: 8px; }
+.subsection-title__icon svg { width: 14px; height: 14px; }
+
+/* ── Requirement row ─────────────────────────────────────── */
+.badge-requirement { display: flex; align-items: center; gap: 7px; }
+.badge-req__icon svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+/* ── Empty state icon ────────────────────────────────────── */
+.empty-state__icon { display: flex; justify-content: center; margin-bottom: 16px; }
+.empty-state__icon svg { width: 32px; height: 32px; color: rgba(0,0,0,.2); }
+
+.badge-meta { flex: 1; }
+
+.badge-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: #0a0a0a;
+    margin-bottom: 5px;
+}
+
+.badge-category {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: rgba(0,0,0,.4);
+    background: rgba(0,0,0,.05);
+    padding: 3px 8px;
+}
+
+.badge-description {
+    font-size: 12px;
+    color: rgba(0,0,0,.6);
+    line-height: 1.55;
+    letter-spacing: .2px;
+}
+
+.badge-requirement {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-left: 2px solid;
+    background: rgba(0,0,0,.03);
+    letter-spacing: .2px;
+}
+.badge-requirement--earned { border-left-color: #7ed957; color: rgba(0,0,0,.7); }
+.badge-requirement--locked { border-left-color: rgba(0,0,0,.2); color: rgba(0,0,0,.5); }
+
+.badge-ready {
+    color: #5ab83a;
+    font-weight: 700;
+}
+
+/* ── Progress bar ────────────────────────────────────────── */
+.progress-section { margin-top: 4px; }
+
+.progress-label {
+    font-size: 10px;
+    color: rgba(0,0,0,.5);
+    letter-spacing: .3px;
+    margin-bottom: 6px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #f0f0f0;
+    border: 1px solid rgba(0,0,0,.06);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #7ed957;
+    transition: width .6s ease;
+}
+.progress-fill--full { width: 100%; }
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+    padding: 50px 20px;
+    text-align: center;
+    border: 1px dashed rgba(0,0,0,.1);
+    margin-bottom: 40px;
+}
+
+.empty-state__title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: rgba(0,0,0,.5);
+    margin-bottom: 10px;
+}
+
+.empty-state__text {
+    font-size: 13px;
+    color: rgba(0,0,0,.4);
+    line-height: 1.6;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 968px) {
-  .level-stats { grid-template-columns: repeat(3, 1fr); }
-  .badges-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .badges-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    .badge-header    { padding-right: 60px; }
 }
 
 @media (max-width: 768px) {
-  .badges-page { padding: 80px 20px 50px; }
-  .page-header { padding: 30px 25px; flex-direction: column; align-items: flex-start; }
-  .header-actions { width: 100%; }
-  .btn-secondary { width: 100%; }
-  .level-card { padding: 35px; }
-  .level-display { flex-direction: column; gap: 25px; text-align: center; }
-  .level-icon { font-size: 60px; }
-  .level-name { font-size: 32px; }
-  .level-stats { grid-template-columns: 1fr; }
-  .badges-section, .tips-section { padding: 30px; }
-  .badges-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-  .tip-card { padding: 25px; }
+    .badges-page     { padding: 80px 20px 50px; }
+    .page-header     { padding: 30px 25px; }
+    .header-content  { width: 100%; text-align: center; margin-bottom: 15px; }
+    .header-actions  { width: 100%; justify-content: center; }
+    .back-btn        { font-size: 10px; padding: 8px 14px; }
+    .badges-section  { padding: 30px 25px; }
+    .group-tabs      { flex-direction: column; gap: 8px; }
+    .stats-overview  { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+    .badges-grid     { grid-template-columns: 1fr; gap: 15px; }
+    .badge-header    { 
+        flex-direction: column; 
+        align-items: flex-start; 
+        padding-right: 0; 
+        gap: 10px;
+    }
+    .badge-status    { 
+        position: static; 
+        margin-bottom: 10px;
+        align-self: flex-end;
+    }
 }
 
 @media (max-width: 480px) {
-  h1.page-title { font-size: 26px; }
-  .level-card { padding: 25px; }
-  .level-name { font-size: 26px; }
-  .level-icon { font-size: 48px; }
-  .stat-value { font-size: 28px; }
-  .badges-grid, .tips-grid { grid-template-columns: 1fr; }
-  .badge-card { min-height: 280px; padding: 25px; }
-  .section-title { font-size: 24px; }
+    .page-title            { font-size: 26px; }
+    .stat-card .stat-value { font-size: 28px; }
+    .badges-section        { padding: 20px; }
+    .badge-card            { padding: 20px; }
+    .badge-icon            { width: 46px; height: 46px; font-size: 22px; }
+    .stats-overview        { grid-template-columns: 1fr; }
 }

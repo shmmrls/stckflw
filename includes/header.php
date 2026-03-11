@@ -60,6 +60,7 @@ if (!isset($conn) || $conn === null) {
                     <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/item/my_items.php" class="nav-link">My Items</a></li>
                     <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/item/add_item.php" class="nav-link">Add Item</a></li>
                     <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/customer/groups/my_groups.php" class="nav-link">Groups</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/badges.php" class="nav-link">Badges</a></li>
                     <li><a href="<?php echo htmlspecialchars($baseUrl); ?>/user/profile/profile.php" class="nav-link">Profile</a></li>
                 <?php endif; ?>
             </ul>

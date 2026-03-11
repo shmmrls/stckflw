@@ -5,88 +5,213 @@
  */
 
 /**
- * Check and award badges for user actions
+ * Check and award badges for user actions with group-type-specific context
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
- * @param string $action_type Type of action (ADD_ITEM, CONSUME_ITEM, etc)
  * @return array Array of newly unlocked badges
  */
 function checkAndAwardBadges($conn, $user_id) {
     $newly_unlocked = [];
     
-    // Get user's current stats
-    $stats_stmt = $conn->prepare("
-        SELECT 
-            COUNT(DISTINCT ci.item_id) as total_items_added,
-            SUM(CASE WHEN ciu.update_type = 'consumed' THEN 1 ELSE 0 END) as total_consumed,
-            (SELECT total_points FROM user_points WHERE user_id = ?) as total_points,
-            COUNT(DISTINCT ub.badge_id) as badges_earned
-        FROM customer_items ci
-        LEFT JOIN customer_inventory_updates ciu ON ci.item_id = ciu.item_id
-        LEFT JOIN user_badges ub ON ub.user_id = ?
-        WHERE ci.created_by = ?
+    // Get all groups user belongs to
+    $groups_stmt = $conn->prepare("
+        SELECT g.group_id, g.group_name, g.group_type
+        FROM groups g
+        INNER JOIN group_members gm ON g.group_id = gm.group_id
+        WHERE gm.user_id = ?
     ");
-    $stats_stmt->bind_param("iii", $user_id, $user_id, $user_id);
-    $stats_stmt->execute();
-    $stats = $stats_stmt->get_result()->fetch_assoc();
+    $groups_stmt->bind_param("i", $user_id);
+    $groups_stmt->execute();
+    $user_groups = $groups_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $groups_stmt->close();
     
-    // Define badge conditions
-    $badge_conditions = [
-        // Badge ID 1: Newbie Organizer - Add 5 items
-        [
-            'badge_id' => 1,
-            'condition' => ($stats['total_items_added'] ?? 0) >= 5,
-            'name' => 'Newbie Organizer'
-        ],
-        // Badge ID 2: Waste Warrior - Log consumption 20+ times
-        [
-            'badge_id' => 2,
-            'condition' => ($stats['total_consumed'] ?? 0) >= 20,
-            'name' => 'Waste Warrior'
-        ],
-        // Badge ID 3: Inventory Master - Earn 200+ points
-        [
-            'badge_id' => 3,
-            'condition' => ($stats['total_points'] ?? 0) >= 200,
-            'name' => 'Inventory Master'
-        ],
-        // Badge ID 4: Active Helper - Consume 10+ items
-        [
-            'badge_id' => 4,
-            'condition' => ($stats['total_consumed'] ?? 0) >= 10,
-            'name' => 'Active Helper'
-        ],
-        // Badge ID 5: Power User - Earn 500+ points
-        [
-            'badge_id' => 5,
-            'condition' => ($stats['total_points'] ?? 0) >= 500,
-            'name' => 'Power User'
-        ],
-    ];
-    
-    // Check each badge condition
-    foreach ($badge_conditions as $badge) {
-        if ($badge['condition']) {
-            // Check if user already has this badge
-            $check_stmt = $conn->prepare("SELECT user_badge_id FROM user_badges WHERE user_id = ? AND badge_id = ?");
-            $check_stmt->bind_param("ii", $user_id, $badge['badge_id']);
-            $check_stmt->execute();
-            $check_result = $check_stmt->get_result();
-            
-            if ($check_result->num_rows === 0) {
-                // Award the badge
-                $award_stmt = $conn->prepare("INSERT INTO user_badges (user_id, badge_id) VALUES (?, ?)");
-                $award_stmt->bind_param("ii", $user_id, $badge['badge_id']);
-                if ($award_stmt->execute()) {
-                    $newly_unlocked[] = $badge['name'];
+    // Check badges for each group individually
+    foreach ($user_groups as $group) {
+        $group_id = $group['group_id'];
+        $group_type = $group['group_type'];
+        
+        // Get stats for this specific group
+        $stats_stmt = $conn->prepare("
+            SELECT 
+                COUNT(DISTINCT ci.item_id) as total_items_added,
+                SUM(CASE WHEN ciu.update_type = 'consumed' THEN 1 ELSE 0 END) as total_consumed,
+                SUM(CASE WHEN ciu.update_type = 'added' THEN 1 ELSE 0 END) as total_actions,
+                (SELECT total_points FROM user_points WHERE user_id = ?) as total_points,
+                COUNT(DISTINCT ub.badge_id) as badges_earned
+            FROM customer_items ci
+            LEFT JOIN customer_inventory_updates ciu ON ci.item_id = ciu.item_id
+            LEFT JOIN user_badges ub ON ub.user_id = ? AND ub.badge_id IN (1,2,3,4,5)
+            WHERE ci.created_by = ? AND ci.group_id = ?
+        ");
+        $stats_stmt->bind_param("iiii", $user_id, $user_id, $user_id, $group_id);
+        $stats_stmt->execute();
+        $stats = $stats_stmt->get_result()->fetch_assoc();
+        $stats_stmt->close();
+        
+        // Define group-type-specific badge conditions
+        $badge_conditions = [];
+        
+        switch ($group_type) {
+            case 'household':
+                $badge_conditions = [
+                    // Badge ID 1: Family Organizer - Add 5 items
+                    [
+                        'badge_id' => 1,
+                        'condition' => ($stats['total_items_added'] ?? 0) >= 5,
+                        'name' => 'Family Organizer'
+                    ],
+                    // Badge ID 2: Waste Reducer - Log consumption 15+ times
+                    [
+                        'badge_id' => 2,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 15,
+                        'name' => 'Waste Reducer'
+                    ],
+                    // Badge ID 3: Smart Shopper - Earn 150+ points
+                    [
+                        'badge_id' => 3,
+                        'condition' => ($stats['total_points'] ?? 0) >= 150,
+                        'name' => 'Smart Shopper'
+                    ],
+                    // Badge ID 4: Active Member - Consume 8+ items
+                    [
+                        'badge_id' => 4,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 8,
+                        'name' => 'Active Member'
+                    ],
+                    // Badge ID 5: Household Hero - Earn 300+ points
+                    [
+                        'badge_id' => 5,
+                        'condition' => ($stats['total_points'] ?? 0) >= 300,
+                        'name' => 'Household Hero'
+                    ],
+                ];
+                break;
+                
+            case 'co_living':
+                $badge_conditions = [
+                    // Badge ID 1: Roommate Coordinator - Add 3 items
+                    [
+                        'badge_id' => 1,
+                        'condition' => ($stats['total_items_added'] ?? 0) >= 3,
+                        'name' => 'Roommate Coordinator'
+                    ],
+                    // Badge ID 2: Shared Resource Manager - Log consumption 25+ times
+                    [
+                        'badge_id' => 2,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 25,
+                        'name' => 'Shared Resource Manager'
+                    ],
+                    // Badge ID 3: Community Leader - Earn 200+ points
+                    [
+                        'badge_id' => 3,
+                        'condition' => ($stats['total_points'] ?? 0) >= 200,
+                        'name' => 'Community Leader'
+                    ],
+                    // Badge ID 4: Team Player - Consume 12+ items
+                    [
+                        'badge_id' => 4,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 12,
+                        'name' => 'Team Player'
+                    ],
+                    // Badge ID 5: Co-living Champion - Earn 400+ points
+                    [
+                        'badge_id' => 5,
+                        'condition' => ($stats['total_points'] ?? 0) >= 400,
+                        'name' => 'Co-living Champion'
+                    ],
+                ];
+                break;
+                
+            case 'small_business':
+                $badge_conditions = [
+                    // Badge ID 1: Inventory Manager - Add 10 items
+                    [
+                        'badge_id' => 1,
+                        'condition' => ($stats['total_items_added'] ?? 0) >= 10,
+                        'name' => 'Inventory Manager'
+                    ],
+                    // Badge ID 2: Efficiency Expert - Log consumption 30+ times
+                    [
+                        'badge_id' => 2,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 30,
+                        'name' => 'Efficiency Expert'
+                    ],
+                    // Badge ID 3: Business Pro - Earn 250+ points
+                    [
+                        'badge_id' => 3,
+                        'condition' => ($stats['total_points'] ?? 0) >= 250,
+                        'name' => 'Business Pro'
+                    ],
+                    // Badge ID 4: Staff Leader - Consume 15+ items
+                    [
+                        'badge_id' => 4,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 15,
+                        'name' => 'Staff Leader'
+                    ],
+                    // Badge ID 5: Operations Master - Earn 500+ points
+                    [
+                        'badge_id' => 5,
+                        'condition' => ($stats['total_points'] ?? 0) >= 500,
+                        'name' => 'Operations Master'
+                    ],
+                ];
+                break;
+                
+            default:
+                // Fallback to original generic badges
+                $badge_conditions = [
+                    [
+                        'badge_id' => 1,
+                        'condition' => ($stats['total_items_added'] ?? 0) >= 5,
+                        'name' => 'Newbie Organizer'
+                    ],
+                    [
+                        'badge_id' => 2,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 20,
+                        'name' => 'Waste Warrior'
+                    ],
+                    [
+                        'badge_id' => 3,
+                        'condition' => ($stats['total_points'] ?? 0) >= 200,
+                        'name' => 'Inventory Master'
+                    ],
+                    [
+                        'badge_id' => 4,
+                        'condition' => ($stats['total_consumed'] ?? 0) >= 10,
+                        'name' => 'Active Helper'
+                    ],
+                    [
+                        'badge_id' => 5,
+                        'condition' => ($stats['total_points'] ?? 0) >= 500,
+                        'name' => 'Power User'
+                    ],
+                ];
+                break;
+        }
+        
+        // Check each badge condition
+        foreach ($badge_conditions as $badge) {
+            if ($badge['condition']) {
+                // Check if user already has this badge
+                $check_stmt = $conn->prepare("SELECT user_badge_id FROM user_badges WHERE user_id = ? AND badge_id = ?");
+                $check_stmt->bind_param("ii", $user_id, $badge['badge_id']);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                
+                if ($check_result->num_rows === 0) {
+                    // Award the badge
+                    $award_stmt = $conn->prepare("INSERT INTO user_badges (user_id, badge_id) VALUES (?, ?)");
+                    $award_stmt->bind_param("ii", $user_id, $badge['badge_id']);
+                    if ($award_stmt->execute()) {
+                        $newly_unlocked[] = $badge['name'];
+                    }
+                    $award_stmt->close();
                 }
-                $award_stmt->close();
+                $check_stmt->close();
             }
-            $check_stmt->close();
         }
     }
     
-    $stats_stmt->close();
     return $newly_unlocked;
 }
 
@@ -161,6 +286,26 @@ function getUserBadges($conn, $user_id) {
 }
 
 /**
+ * Get user's group type
+ * @param mysqli $conn Database connection
+ * @param int $user_id User ID
+ * @return string Group type
+ */
+function getUserGroupType($conn, $user_id) {
+    $stmt = $conn->prepare("
+        SELECT g.group_type 
+        FROM groups g
+        JOIN group_members gm ON g.group_id = gm.group_id
+        WHERE gm.user_id = ?
+        LIMIT 1
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    return $result['group_type'] ?? 'household';
+}
+
+/**
  * Get user's level and progress
  * @param mysqli $conn Database connection
  * @param int $user_id User ID
@@ -173,6 +318,18 @@ function getUserLevel($conn, $user_id) {
     $result = $stmt->get_result()->fetch_assoc();
     $total_points = $result['total_points'] ?? 0;
     return calculateLevel($total_points);
+}
+
+/**
+ * Get user's level and progress with group context
+ * @param mysqli $conn Database connection
+ * @param int $user_id User ID
+ * @return array Level information with group type
+ */
+function getUserLevelWithGroup($conn, $user_id) {
+    $level_info = getUserLevel($conn, $user_id);
+    $level_info['group_type'] = getUserGroupType($conn, $user_id);
+    return $level_info;
 }
 
 /**
@@ -197,12 +354,14 @@ function getLevelIcon($level) {
 }
 
 /**
- * Get level name based on level number
+ * Get level name based on level number and group type
  * @param int $level Level number
+ * @param string $group_type Group type (household, co_living, small_business)
  * @return string Level name
  */
-function getLevelName($level) {
-    $names = [
+function getLevelName($level, $group_type = null) {
+    // Default names if no group type specified
+    $default_names = [
         1 => 'Newcomer',
         2 => 'Organizer',
         3 => 'Coordinator',
@@ -214,7 +373,57 @@ function getLevelName($level) {
         9 => 'Legend',
         10 => 'Mythical'
     ];
-    return $names[$level] ?? 'Unknown';
+    
+    // Group-type specific names
+    $household_names = [
+        1 => 'Family Member',
+        2 => 'Helper',
+        3 => 'Organizer',
+        4 => 'Planner',
+        5 => 'Manager',
+        6 => 'Super Parent',
+        7 => 'Family Expert',
+        8 => 'Household Master',
+        9 => 'Family Legend',
+        10 => 'Ultimate Parent'
+    ];
+    
+    $co_living_names = [
+        1 => 'New Roommate',
+        2 => 'Contributor',
+        3 => 'Team Player',
+        4 => 'Coordinator',
+        5 => 'Community Leader',
+        6 => 'House Manager',
+        7 => 'Resource Expert',
+        8 => 'Co-living Master',
+        9 => 'Community Legend',
+        10 => 'Ultimate Roommate'
+    ];
+    
+    $business_names = [
+        1 => 'Trainee',
+        2 => 'Staff Member',
+        3 => 'Operator',
+        4 => 'Supervisor',
+        5 => 'Manager',
+        6 => 'Team Leader',
+        7 => 'Operations Expert',
+        8 => 'Business Master',
+        9 => 'Executive',
+        10 => 'CEO Level'
+    ];
+    
+    switch ($group_type) {
+        case 'household':
+            return $household_names[$level] ?? $default_names[$level] ?? 'Unknown';
+        case 'co_living':
+            return $co_living_names[$level] ?? $default_names[$level] ?? 'Unknown';
+        case 'small_business':
+            return $business_names[$level] ?? $default_names[$level] ?? 'Unknown';
+        default:
+            return $default_names[$level] ?? 'Unknown';
+    }
 }
 
 ?>
